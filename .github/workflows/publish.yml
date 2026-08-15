@@ -1,0 +1,51 @@
+name: Instagram Autoposter
+
+on:
+  schedule:
+    # Täglich 05:00 UTC = 07:00 Uhr Wien (Sommerzeit)
+    - cron: "0 5 * * *"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Trockenlauf (nichts wird veröffentlicht)"
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+
+concurrency:
+  group: instagram-autoposter
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Repository auschecken
+        uses: actions/checkout@v4
+
+      - name: Python einrichten
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Beitrag veröffentlichen
+        env:
+          IG_USER_ID: ${{ secrets.IG_USER_ID }}
+          IG_ACCESS_TOKEN: ${{ secrets.IG_ACCESS_TOKEN }}
+          DRY_RUN: ${{ github.event.inputs.dry_run == 'true' && '1' || '0' }}
+        run: python publish.py
+
+      - name: schedule.json zurückschreiben
+        if: github.event.inputs.dry_run != 'true'
+        run: |
+          if [ -n "$(git status --porcelain schedule.json)" ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add schedule.json
+            git commit -m "chore: Beitrag veröffentlicht, published_id eingetragen"
+            git push
+          else
+            echo "Keine Änderung an schedule.json — nichts zu committen."
+          fi
