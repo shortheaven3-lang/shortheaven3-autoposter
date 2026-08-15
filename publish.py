@@ -221,8 +221,14 @@ def main() -> int:
 
     ig_user_id = os.environ.get("IG_USER_ID", "").strip()
     token = os.environ.get("IG_ACCESS_TOKEN", "").strip()
-    if not ig_user_id or not token:
+    if not dry_run and (not ig_user_id or not token):
         raise PublishError("IG_USER_ID und IG_ACCESS_TOKEN müssen gesetzt sein.")
+    if dry_run:
+        fehlend = [n for n, v in (("IG_USER_ID", ig_user_id),
+                                  ("IG_ACCESS_TOKEN", token)) if not v]
+        if fehlend:
+            print(f"[dry-run] Hinweis: {', '.join(fehlend)} noch nicht gesetzt. "
+                  f"Fuer den echten Lauf noetig, fuer den Trockenlauf nicht.")
 
     today = datetime.now(timezone.utc).date()
     schedule = load_schedule()
