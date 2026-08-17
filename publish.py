@@ -51,9 +51,9 @@ class PublishError(RuntimeError):
     """Fehler, der den Lauf mit Exit-Code 1 beendet."""
 
 
-# ---------------------------------------------------------------------------
+# --------------------------------------------------------------------------
 # HTTP
-# ---------------------------------------------------------------------------
+# --------------------------------------------------------------------------
 
 def _request(method: str, url: str, params: dict | None = None) -> dict:
     params = params or {}
@@ -84,9 +84,9 @@ def graph_post(path: str, token: str, **params) -> dict:
     return _request("POST", f"{GRAPH_HOST}/{GRAPH_VERSION}/{path}", params)
 
 
-# ---------------------------------------------------------------------------
+# --------------------------------------------------------------------------
 # Instagram
-# ---------------------------------------------------------------------------
+# --------------------------------------------------------------------------
 
 def check_quota(ig_user_id: str, token: str) -> None:
     """Bricht ab, wenn das 24-Stunden-Kontingent erschöpft ist."""
@@ -184,9 +184,9 @@ def find_recent_duplicate(ig_user_id: str, token: str, caption: str,
     return None
 
 
-# ---------------------------------------------------------------------------
+# --------------------------------------------------------------------------
 # Redaktionsplan
-# ---------------------------------------------------------------------------
+# --------------------------------------------------------------------------
 
 def load_schedule() -> dict:
     if not SCHEDULE_PATH.exists():
@@ -241,9 +241,9 @@ def verify_local_images(post: dict) -> None:
         )
 
 
-# ---------------------------------------------------------------------------
+# --------------------------------------------------------------------------
 # Hauptlauf
-# ---------------------------------------------------------------------------
+# --------------------------------------------------------------------------
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Instagram-Autoposter")
@@ -259,7 +259,7 @@ def main() -> int:
         raise PublishError("IG_USER_ID und IG_ACCESS_TOKEN müssen gesetzt sein.")
     if dry_run:
         fehlend = [n for n, v in (("IG_USER_ID", ig_user_id),
-                          ("IG_ACCESS_TOKEN", token)) if not v]
+                                ("IG_ACCESS_TOKEN", token)) if not v]
         if fehlend:
             print(f"[dry-run] Hinweis: {', '.join(fehlend)} noch nicht gesetzt. "
                   f"Fuer den echten Lauf noetig, fuer den Trockenlauf nicht.")
@@ -309,7 +309,7 @@ def main() -> int:
     if is_carousel:
         children = []
         for name in post["images"]:
-            cid = create_image_container(ig_user_id, token, image_url_for(nsme),
+            cid = create_image_container(ig_user_id, token, image_url_for(name),
                                         caption="", is_carousel_item=True)
             wait_for_container(cid, token)
             children.append(cid)
@@ -319,7 +319,7 @@ def main() -> int:
     else:
         container_id = create_image_container(ig_user_id, token,
                                               image_url_for(post["image"]),
-                                              post["caption"])
+                                            post["caption"])
 
     print(f"[container] Sammelcontainer {container_id}")
     wait_for_container(container_id, token)
