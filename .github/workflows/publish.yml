@@ -45,6 +45,11 @@ jobs:
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git add schedule.json
             git commit -m "chore: Beitrag veröffentlicht, published_id eingetragen"
+            # Falls zwischen Checkout und Push ein anderer Prozess (z. B. ein
+            # manueller Lauf) main bereits aktualisiert hat: rebasen statt
+            # blind zu pushen, damit kein Push-Fehler den Lauf abbricht und
+            # published_id trotzdem sauber landet.
+            git pull --rebase origin "${GITHUB_REF_NAME}"
             git push
           else
             echo "Keine Änderung an schedule.json — nichts zu committen."

@@ -8,6 +8,12 @@ Beitrag und veröffentlicht ihn über die Instagram Graph API.
 Schutzmechanismen:
   * Genau EIN Beitrag pro Lauf, auch wenn mehrere überfällig sind.
   * Idempotenz über published_id: veröffentlichte Beiträge werden übersprungen.
+  * Live-Duplikatsprüfung gegen den tatsächlichen Instagram-Feed unmittelbar vor
+    jeder Veröffentlichung: schützt auch dann, wenn ein zweiter, parallel
+    laufender Prozess (z. B. ein manueller/geplanter Lauf) noch eine veraltete
+    Kopie von schedule.json sieht, in der der Beitrag als unveröffentlicht
+    gilt. Die Prüfung erfolgt gegen die Wahrheit (Instagram selbst), nicht
+    gegen schedule.json.
   * Kontingentprüfung vor jeder Veröffentlichung.
   * Trockenlauf über --dry-run oder DRY_RUN=1.
 
@@ -89,7 +95,7 @@ def check_quota(ig_user_id: str, token: str) -> None:
     entry = (result.get("data") or [{}])[0]
     usage = entry.get("quota_usage", 0)
     total = (entry.get("config") or {}).get("quota_total", 100)
-    print(f"[quota] {usage} von {total} Beiträgen in den letzten 24 h verbraucht")
+    print(f"[quota] {usage} von {total} Beiträge in den letzten 24 h verbraucht")
     if usage >= total:
         raise PublishError("Kontingent erschöpft — Lauf wird abgebrochen.")
 
@@ -150,6 +156,34 @@ def get_permalink(media_id: str, token: str) -> str:
         return ""
 
 
+def normalize_caption(text: str) -> str:
+    """Normalisiert eine Caption für den Vergleich (Whitespace/Zeilenumbrüche egal)."""
+    return " ".join((text or "").split())
+
+
+def find_recent_duplicate(ig_user_id: str, token: str, caption: str,
+                          limit: int = 30) -> dict | None:
+    """Prüft die zuletzt veröffentlichten Beiträge auf eine (nahezu) identische Caption.
+
+    Das ist die eigentliche Absicherung gegen Doppel-Veröffentlichung: Ob ein
+    zweiter, gleichzeitig laufender Prozess (z. B. ein manueller Lauf mit einer
+    veralteten schedule.json-Kopie, etwa über einen gecachten
+    raw.githubusercontent.com-Abruf) denselben Beitrag noch einmal einreichen
+    will, spielt keine Rolle — hier wird gegen den tatsächlichen Instagram-Feed
+    geprüft, nicht gegen schedule.json. Läuft absichtlich VOR jedem
+    Container-Aufruf, damit im Duplikatsfall gar nichts unwiderruflich passiert.
+    """
+    target = normalize_caption(caption)
+    if not target:
+        return None
+    result = graph_get(f"{ig_user_id}/media", token,
+                       fields="id,caption,timestamp,permalink", limit=limit)
+    for item in result.get("data", []):
+        if normalize_caption(item.get("caption", "")) == target:
+            return item
+    return None
+
+
 # --------------------------------------------------------------------------
 # Redaktionsplan
 # --------------------------------------------------------------------------
@@ -168,7 +202,7 @@ def save_schedule(schedule: dict) -> None:
 
 
 def pick_due_post(schedule: dict, today: date) -> dict | None:
-    """Ältester fälliger Beitrag ohne published_id. Genau einer pro Lauf."""
+    """ÄLtester fälliger Beitrag ohne published_id. Genau einer pro Lauf."""
     due = [
         p for p in schedule.get("posts", [])
         if not p.get("published_id")
@@ -225,7 +259,7 @@ def main() -> int:
         raise PublishError("IG_USER_ID und IG_ACCESS_TOKEN müssen gesetzt sein.")
     if dry_run:
         fehlend = [n for n, v in (("IG_USER_ID", ig_user_id),
-                                  ("IG_ACCESS_TOKEN", token)) if not v]
+                                ("IG_ACCESS_TOKEN", token)) if not v]
         if fehlend:
             print(f"[dry-run] Hinweis: {', '.join(fehlend)} noch nicht gesetzt. "
                   f"Fuer den echten Lauf noetig, fuer den Trockenlauf nicht.")
@@ -257,20 +291,35 @@ def main() -> int:
 
     check_quota(ig_user_id, token)
 
+    duplicate = find_recent_duplicate(ig_user_id, token, post["caption"])
+    if duplicate:
+        print(f"[schutz] Beitrag {nummer} scheint bereits veröffentlicht zu sein "
+              f"(Media-ID {duplicate.get('id')}, {duplicate.get('timestamp', '')}) "
+              f"— ein anderer Lauf war schneller. Trage vorhandene ID nach, "
+              f"veröffentliche NICHT erneut.")
+        post["published_id"] = duplicate.get("id")
+        post["published_at"] = duplicate.get("timestamp") or datetime.now(timezone.utc).isoformat()
+        if duplicate.get("permalink"):
+            post["permalink"] = duplicate["permalink"]
+        save_schedule(schedule)
+        print(f"[fertig] Beitrag {nummer} als bereits veröffentlicht markiert — "
+              f"keine neue Veröffentlichung ausgelöst.")
+        return 0
+
     if is_carousel:
         children = []
         for name in post["images"]:
             cid = create_image_container(ig_user_id, token, image_url_for(name),
-                                         caption="", is_carousel_item=True)
+                                        caption="", is_carousel_item=True)
             wait_for_container(cid, token)
             children.append(cid)
             print(f"[container] Kind-Container {cid} für {name}")
         container_id = create_carousel_container(ig_user_id, token, children,
-                                                 post["caption"])
+                                                post["caption"])
     else:
         container_id = create_image_container(ig_user_id, token,
                                               image_url_for(post["image"]),
-                                              post["caption"])
+                                            post["caption"])
 
     print(f"[container] Sammelcontainer {container_id}")
     wait_for_container(container_id, token)
