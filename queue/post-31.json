@@ -1,0 +1,42 @@
+{
+  "post": 31,
+  "date": "2026-08-26",
+  "saeule": "Die Frage",
+  "caption": "Wem gehört die Stimme in deinem Kopf?\n\nFast jeder harte Satz, den du dir selbst sagst, ist ein Zitat. Irgendwann hat ihn jemand über dich gesagt — und du hast nur vergessen, wer.\n\nDeshalb bringt es nichts, mit diesen Gedanken zu diskutieren. Frag stattdessen nach der Herkunft. Ein Satz ohne Absender verliert die Hälfte seiner Macht.\n\nWisch dich durch.\n\n#selbstreflexion #innerearbeit #gedanken #achtsamkeit #psychologie",
+  "slides": [
+    {
+      "typ": "hook",
+      "headline": "Wem gehört die Stimme in deinem Kopf?",
+      "unterzeile": "Die meisten Gedanken hast du nie selbst gedacht."
+    },
+    {
+      "typ": "inhalt",
+      "ziffer": "01",
+      "headline": "Wessen Satz war das?",
+      "text": "Fast jede harte Selbstkritik ist ein Zitat. Du hast nur den Sprecher vergessen."
+    },
+    {
+      "typ": "inhalt",
+      "ziffer": "02",
+      "headline": "Du verteidigst fremde Regeln",
+      "text": "Regeln von Menschen, die dein Leben nie leben mussten."
+    },
+    {
+      "typ": "inhalt",
+      "ziffer": "03",
+      "headline": "Frag nicht, ob es stimmt",
+      "text": "Frag, wem es nützt, dass du es glaubst."
+    },
+    {
+      "typ": "inhalt",
+      "ziffer": "04",
+      "headline": "Ein Gedanke ohne Herkunft",
+      "text": "Was bleibt von dem Satz, wenn du den Namen darunter streichst?"
+    },
+    {
+      "typ": "cta",
+      "headline": "Stell die Frage heute einmal",
+      "text": "Wessen Stimme war das gerade?"
+    }
+  ]
+}
