@@ -19,19 +19,21 @@ BG = (27, 35, 54)
 FG = (158, 130, 106)
 BASE = os.path.dirname(os.path.abspath(__file__))
 
-FONT_ORTE = [
-    os.path.join(BASE, "fonts"),
-    "/usr/share/fonts/truetype/ebgaramond",
-    "/usr/share/fonts/opentype/ebgaramond",
-]
+SUCHORTE = [os.path.join(BASE, "fonts"), "/usr/share/fonts", "/usr/local/share/fonts",
+            os.path.expanduser("~/.fonts")]
 
 
-def font_pfad(datei):
-    for ort in FONT_ORTE:
-        p = os.path.join(ort, datei)
-        if os.path.exists(p):
-            return p
-    raise SystemExit(f"Schrift {datei} nicht gefunden: apt-get install fonts-ebgaramond")
+def font_pfad(muster):
+    """Sucht die erste passende Schriftdatei; Muster in absteigender Vorliebe."""
+    for m in muster:
+        for ort in SUCHORTE:
+            for endung in (".ttf", ".otf"):
+                treffer = sorted(glob.glob(os.path.join(ort, "**", m + endung), recursive=True))
+                if treffer:
+                    return treffer[0]
+    raise SystemExit(
+        "EB Garamond nicht gefunden. Debian/Ubuntu: apt-get install fonts-ebgaramond"
+    )
 
 
 ITALIC = None
@@ -167,8 +169,11 @@ def verarbeiten(pfad):
 
 def main():
     global ITALIC, REGULAR
-    ITALIC = font_pfad("EBGaramond12-Italic.ttf")
-    REGULAR = font_pfad("EBGaramond12-Regular.ttf")
+    ITALIC = font_pfad(["EBGaramond12-Italic", "EBGaramond08-Italic", "EBGaramond-Italic",
+                        "EBGaramond*Italic"])
+    REGULAR = font_pfad(["EBGaramond12-Regular", "EBGaramond08-Regular", "EBGaramond-Regular",
+                         "EBGaramond*Regular"])
+    print("Schriften:", ITALIC, REGULAR)
     args = sys.argv[1:]
     dateien = sorted(glob.glob(os.path.join(BASE, "queue", "*.json"))) if (
         not args or args[0] == "--alle"
