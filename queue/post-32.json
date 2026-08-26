@@ -1,0 +1,30 @@
+{
+  "post": 32,
+  "date": "2026-08-27",
+  "saeule": "Die Stille",
+  "caption": "Du hast heute nichts verpasst.\n\nEs fühlt sich nur so an, weil überall etwas passiert und du gerade nichts davon warst. Aber Anwesenheit ist keine Leistung.\n\nEin stiller Tag verschwindet nicht aus deinem Leben. Er ist der Teil, an dem du später merkst, dass du geatmet hast.\n\nWisch dich durch.\n\n#stille #achtsamkeit #ruhe #entschleunigung #innerearbeit",
+  "slides": [
+    {
+      "typ": "hook",
+      "headline": "Du hast heute nichts verpasst",
+      "unterzeile": "Der Lärm war nur lauter als du."
+    },
+    {
+      "typ": "inhalt",
+      "ziffer": "01",
+      "headline": "Ein Tag ohne Ereignis",
+      "text": "Er zählt trotzdem zu deinem Leben."
+    },
+    {
+      "typ": "inhalt",
+      "ziffer": "02",
+      "headline": "Nicht jede Leere ist Mangel",
+      "text": "Manche ist einfach Platz, den niemand füllen muss."
+    },
+    {
+      "typ": "cta",
+      "headline": "Bleib heute unbeantwortet",
+      "text": "Die Welt wartet gut ohne dich."
+    }
+  ]
+}
