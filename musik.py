@@ -30,10 +30,10 @@ ARCHIV = os.path.join(BASE, "audio")
 
 # Grundton, Tonleiter und Dichte je Saeule. Die Stille bekommt am wenigsten.
 STIMMUNG = {
-    "Der Spiegel": dict(grund=110.00, stufen=(0, 3, 7, 10, 12), glocken=0.55, luft=0.35),
-    "Das Ritual":  dict(grund=73.42,  stufen=(0, 2, 7, 9, 14),  glocken=0.70, luft=0.30),
-    "Die Frage":   dict(grund=82.41,  stufen=(0, 2, 7, 12, 14), glocken=0.60, luft=0.40),
-    "Die Stille":  dict(grund=65.41,  stufen=(0, 7, 12, 15),    glocken=0.28, luft=0.45),
+    "Der Spiegel": dict(grund=110.00, stufen=(0, 3, 7, 10, 12, 15), glocken=1.10, luft=0.35),
+    "Das Ritual":  dict(grund=73.42,  stufen=(0, 2, 7, 9, 14, 16),  glocken=1.35, luft=0.30),
+    "Die Frage":   dict(grund=82.41,  stufen=(0, 2, 7, 12, 14, 19), glocken=1.15, luft=0.40),
+    "Die Stille":  dict(grund=65.41,  stufen=(0, 7, 10, 12, 15),    glocken=0.75, luft=0.45),
 }
 STANDARD = STIMMUNG["Die Stille"]
 
@@ -65,8 +65,9 @@ def erzeugen(dauer: float, saeule: str = "", seed: int = 0) -> np.ndarray:
     rechts = np.zeros(n, np.float32)
 
     # 1) Bordun: Grundton und Quinte, leicht verstimmt, damit es atmet
-    for f, amp in ((st["grund"], 0.34), (st["grund"] * 1.4983, 0.19),
-                   (st["grund"] * 2, 0.13)):
+    for f, amp in ((st["grund"], 0.34), (st["grund"] * 1.4983, 0.22),
+                   (st["grund"] * 2, 0.20), (st["grund"] * 3, 0.11),
+                   (st["grund"] * 4, 0.07)):
         for seite, versatz in ((0, -1.0), (1, 1.0)):
             ff = f * (1 + versatz * rng.uniform(0.0006, 0.0022))
             lfo = 0.72 + 0.28 * np.sin(2 * np.pi * rng.uniform(0.03, 0.075) * t
@@ -78,12 +79,17 @@ def erzeugen(dauer: float, saeule: str = "", seed: int = 0) -> np.ndarray:
     for stufe in st["stufen"]:
         f = _halbton(st["grund"], stufe) * 2
         phase = rng.uniform(0, 6.28)
-        periode = rng.uniform(11.0, 23.0)
-        h = np.clip(np.sin(2 * np.pi * t / periode + phase), 0, 1) ** 1.7
-        amp = rng.uniform(0.05, 0.10)
-        kern = (np.sin(2 * np.pi * f * t) * 0.75
-                + np.sin(2 * np.pi * f * 2.002 * t) * 0.17
-                + np.sin(2 * np.pi * f * 3.001 * t) * 0.08).astype(np.float32)
+        periode = rng.uniform(9.0, 17.0)
+        # Untergrenze 0.42: die Flaeche verschwindet nie ganz, sonst reisst
+        # zwischen den Schwellen ein Loch auf.
+        h = 0.42 + 0.58 * np.clip(np.sin(2 * np.pi * t / periode + phase), 0, 1) ** 1.4
+        amp = rng.uniform(0.10, 0.17)
+        vers = 1 + rng.uniform(0.0015, 0.0035)      # verstimmter Zwilling
+        kern = (np.sin(2 * np.pi * f * t) * 0.62
+                + np.sin(2 * np.pi * f * vers * t) * 0.38
+                + np.sin(2 * np.pi * f * 2.002 * t) * 0.22
+                + np.sin(2 * np.pi * f * 3.001 * t) * 0.12
+                + np.sin(2 * np.pi * f * 4.004 * t) * 0.06).astype(np.float32)
         pan = rng.uniform(0.28, 0.72)
         links += kern * h * amp * (1 - pan)
         rechts += kern * h * amp * pan
@@ -93,7 +99,7 @@ def erzeugen(dauer: float, saeule: str = "", seed: int = 0) -> np.ndarray:
     for _ in range(max(0, anzahl)):
         start = rng.uniform(1.5, max(2.0, dauer - 4.0))
         i0 = int(start * SR)
-        laenge = int(rng.uniform(2.4, 4.2) * SR)
+        laenge = int(rng.uniform(3.4, 6.0) * SR)
         laenge = min(laenge, n - i0)
         if laenge <= 0:
             continue
@@ -101,14 +107,26 @@ def erzeugen(dauer: float, saeule: str = "", seed: int = 0) -> np.ndarray:
         f = _halbton(st["grund"], rng.choice(st["stufen"]) + 24)
         huelle = np.exp(-tt * rng.uniform(1.0, 1.7)).astype(np.float32)
         anschlag = np.clip(tt / 0.06, 0, 1)
-        ton = (np.sin(2 * np.pi * f * tt) * 0.8
-               + np.sin(2 * np.pi * f * 2.01 * tt) * 0.2).astype(np.float32)
-        ton *= huelle * anschlag * rng.uniform(0.05, 0.09)
+        ton = (np.sin(2 * np.pi * f * tt) * 0.70
+               + np.sin(2 * np.pi * f * 2.01 * tt) * 0.20
+               + np.sin(2 * np.pi * f * 3.02 * tt) * 0.10).astype(np.float32)
+        ton *= huelle * anschlag * rng.uniform(0.08, 0.13)
         pan = rng.uniform(0.2, 0.8)
         links[i0:i0 + laenge] += ton * (1 - pan)
         rechts[i0:i0 + laenge] += ton * pan
 
-    # 4) Luft: sehr leises, tiefpassgefiltertes Rauschen
+    # 4) Schimmer: hohe Teiltoene der Tonleiter, sehr leise, langsam bewegt.
+    #    Traegt die Detailzeichnung oben, ohne lauter zu wirken.
+    for stufe in st["stufen"][:4]:
+        f = _halbton(st["grund"], stufe) * 8
+        beweg = 0.5 + 0.5 * np.sin(2 * np.pi * rng.uniform(0.02, 0.06) * t
+                                   + rng.uniform(0, 6.28))
+        kern = np.sin(2 * np.pi * f * t).astype(np.float32) * beweg
+        pan = rng.uniform(0.25, 0.75)
+        links += kern * 0.016 * (1 - pan)
+        rechts += kern * 0.016 * pan
+
+    # 5) Luft: sehr leises, tiefpassgefiltertes Rauschen
     sos_luft = signal.butter(2, 1100, "lp", fs=SR, output="sos")
     for kanal in (links, rechts):
         rausch = signal.sosfilt(sos_luft, rng.normal(0, 1, n)).astype(np.float32)
@@ -116,8 +134,8 @@ def erzeugen(dauer: float, saeule: str = "", seed: int = 0) -> np.ndarray:
         atem = 0.6 + 0.4 * np.sin(2 * np.pi * 0.045 * t + rng.uniform(0, 6.28))
         kanal += rausch * atem * 0.030 * st["luft"]
 
-    # 5) Waerme, Hall, Blenden, Pegel
-    sos_warm = signal.butter(2, 4200, "lp", fs=SR, output="sos")
+    # 6) Waerme, Hall, Blenden, Pegel
+    sos_warm = signal.butter(2, 6200, "lp", fs=SR, output="sos")
     links = signal.sosfilt(sos_warm, links).astype(np.float32)
     rechts = signal.sosfilt(sos_warm, rechts).astype(np.float32)
     links = _hall(links, np.random.default_rng(seed + 11))
@@ -128,10 +146,13 @@ def erzeugen(dauer: float, saeule: str = "", seed: int = 0) -> np.ndarray:
     blende = (ein * aus).astype(np.float32)
     stereo = np.stack([links * blende, rechts * blende], axis=1)
 
-    spitze = np.abs(stereo).max() + 1e-9
-    stereo *= (10 ** (-14 / 20)) / spitze          # Spitze auf etwa -14 dBFS
+    # Erst auf das RMS-Ziel bringen - das darf ausdruecklich auch anheben.
+    # Danach die Spitzen weich begrenzen statt alles wieder herunterzuskalieren:
+    # sonst bestimmt der lauteste Einzelton die Lautheit des ganzen Stuecks.
     rms = np.sqrt((stereo ** 2).mean()) + 1e-9
-    stereo *= min(1.0, (10 ** (-23 / 20)) / rms)   # Bett, nicht Vordergrund
+    stereo *= (10 ** (-19.5 / 20)) / rms
+    grenze = 10 ** (-5 / 20)
+    stereo = (grenze * np.tanh(stereo / grenze)).astype(np.float32)
     return np.clip(stereo, -1, 1).astype(np.float32)
 
 
