@@ -35,10 +35,12 @@ GRAPH_HOST = "https://graph.instagram.com"
 REPO_ROOT = Path(__file__).resolve().parent
 SCHEDULE_PATH = REPO_ROOT / "schedule.json"
 IMAGE_DIR = REPO_ROOT / "images"
+VIDEO_DIR = REPO_ROOT / "videos"
 
 # Basis-URL für die Bilder im Repository. Wird aus den GitHub-Actions-Variablen
 # gebaut, lässt sich aber über IMAGE_BASE_URL überschreiben.
 DEFAULT_IMAGE_BASE = "https://raw.githubusercontent.com/{repo}/{branch}/images"
+DEFAULT_VIDEO_BASE = "https://raw.githubusercontent.com/{repo}/{branch}/videos"
 
 
 class PublishError(RuntimeError):
@@ -135,6 +137,20 @@ def create_carousel_container(ig_user_id: str, token: str,
     return container_id
 
 
+def create_reel_container(ig_user_id: str, token: str, video_url: str,
+                          caption: str) -> str:
+    """Reel-Container. Instagram laedt das Video selbst von der URL."""
+    result = graph_post(f"{ig_user_id}/media", token,
+                        media_type="REELS",
+                        video_url=video_url,
+                        caption=caption,
+                        share_to_feed="true")
+    container_id = result.get("id")
+    if not container_id:
+        raise PublishError(f"Keine Reel-Container-ID erhalten: {result}")
+    return container_id
+
+
 def publish_container(ig_user_id: str, token: str, container_id: str) -> str:
     result = graph_post(f"{ig_user_id}/media_publish", token, creation_id=container_id)
     media_id = result.get("id")
@@ -184,21 +200,38 @@ def pick_due_post(schedule: dict, today: date) -> dict | None:
     return due[0]
 
 
-def image_url_for(filename: str) -> str:
-    base = os.environ.get("IMAGE_BASE_URL")
+def _basis_url(env_name: str, vorlage: str) -> str:
+    base = os.environ.get(env_name)
     if not base:
         repo = os.environ.get("GITHUB_REPOSITORY")
         branch = os.environ.get("GITHUB_REF_NAME", "main")
         if not repo:
             raise PublishError(
-                "Weder IMAGE_BASE_URL noch GITHUB_REPOSITORY gesetzt — "
-                "die Bild-URL lässt sich nicht bilden."
+                f"Weder {env_name} noch GITHUB_REPOSITORY gesetzt — "
+                "die URL lässt sich nicht bilden."
             )
-        base = DEFAULT_IMAGE_BASE.format(repo=repo, branch=branch)
-    return f"{base.rstrip('/')}/{filename}"
+        base = vorlage.format(repo=repo, branch=branch)
+    return base.rstrip("/")
 
 
-def verify_local_images(post: dict) -> None:
+def image_url_for(filename: str) -> str:
+    return f"{_basis_url('IMAGE_BASE_URL', DEFAULT_IMAGE_BASE)}/{filename}"
+
+
+def video_url_for(filename: str) -> str:
+    return f"{_basis_url('VIDEO_BASE_URL', DEFAULT_VIDEO_BASE)}/{filename}"
+
+
+def verify_local_media(post: dict) -> None:
+    """Prueft, dass die Dateien wirklich im Repo liegen, bevor Instagram sie holt."""
+    if post.get("video"):
+        pfad = VIDEO_DIR / post["video"]
+        if not pfad.exists():
+            raise PublishError(f"Videodatei fehlt im Ordner videos/: {post['video']}")
+        mb = pfad.stat().st_size / 1024 / 1024
+        if mb > 100:
+            raise PublishError(f"{post['video']} ist {mb:.0f} MB — Instagram nimmt höchstens 100 MB.")
+        return
     names = post.get("images") or [post.get("image")]
     missing = [n for n in names if n and not (IMAGE_DIR / n).exists()]
     if missing:
@@ -239,25 +272,35 @@ def main() -> int:
         return 0
 
     nummer = post.get("post")
+    is_reel = bool(post.get("video"))
     is_carousel = bool(post.get("images"))
-    print(f"[plan] Fällig: Beitrag {nummer} vom {post['date']} "
-          f"({'Karussell' if is_carousel else 'Einzelbild'})")
+    art = "Reel" if is_reel else ("Karussell" if is_carousel else "Einzelbild")
+    print(f"[plan] Fällig: Beitrag {nummer} vom {post['date']} ({art})")
 
-    verify_local_images(post)
+    verify_local_media(post)
 
     if dry_run:
-        urls = [image_url_for(n) for n in (post.get("images") or [post["image"]])]
         print("[dry-run] Es würde veröffentlicht:")
-        print(f"[dry-run]   Beitrag : {nummer} — {post.get('saeule', '')}")
-        for u in urls:
-            print(f"[dry-run]   Bild    : {u}")
+        print(f"[dry-run]   Beitrag : {nummer} — {post.get('saeule', '')} ({art})")
+        if is_reel:
+            print(f"[dry-run]   Video   : {video_url_for(post['video'])}")
+        else:
+            for n in (post.get("images") or [post["image"]]):
+                print(f"[dry-run]   Bild    : {image_url_for(n)}")
         print(f"[dry-run]   Caption : {post['caption'][:120]}…")
         print("[dry-run] Keine Veröffentlichung durchgeführt.")
         return 0
 
     check_quota(ig_user_id, token)
 
-    if is_carousel:
+    if is_reel:
+        container_id = create_reel_container(ig_user_id, token,
+                                             video_url_for(post["video"]),
+                                             post["caption"])
+        print(f"[container] Reel-Container {container_id}")
+        # Video braucht laenger als ein Bild, Instagram kodiert selbst nach.
+        wait_for_container(container_id, token, timeout=300)
+    elif is_carousel:
         children = []
         for name in post["images"]:
             cid = create_image_container(ig_user_id, token, image_url_for(name),
@@ -267,13 +310,14 @@ def main() -> int:
             print(f"[container] Kind-Container {cid} für {name}")
         container_id = create_carousel_container(ig_user_id, token, children,
                                                  post["caption"])
+        print(f"[container] Sammelcontainer {container_id}")
+        wait_for_container(container_id, token)
     else:
         container_id = create_image_container(ig_user_id, token,
                                               image_url_for(post["image"]),
                                               post["caption"])
-
-    print(f"[container] Sammelcontainer {container_id}")
-    wait_for_container(container_id, token)
+        print(f"[container] Container {container_id}")
+        wait_for_container(container_id, token)
 
     media_id = publish_container(ig_user_id, token, container_id)
     permalink = get_permalink(media_id, token)
