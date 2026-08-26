@@ -2,29 +2,30 @@
   "post": 32,
   "date": "2026-08-27",
   "saeule": "Die Stille",
-  "caption": "Du hast heute nichts verpasst.\n\nEs fühlt sich nur so an, weil überall etwas passiert und du gerade nichts davon warst. Aber Anwesenheit ist keine Leistung.\n\nEin stiller Tag verschwindet nicht aus deinem Leben. Er ist der Teil, an dem du später merkst, dass du geatmet hast.\n\nWisch dich durch.\n\n#stille #achtsamkeit #ruhe #entschleunigung #innerearbeit",
+  "caption": "Du hast heute nichts verpasst.\n\nHalb elf. Das Licht ist schon aus, und du nimmst das Handy noch einmal in die Hand. Jemand steht auf einem Berg. Jemand ist auf einem Konzert. Jemand sitzt in einer Küche voller Leute und lacht in die Kamera. Du legst es weg, und irgendetwas hat sich in den letzten neunzig Sekunden verschoben.\n\nVorher war der Tag in Ordnung. Du hast gekocht, du hast gelesen, du hast eine halbe Stunde aus dem Fenster gesehen, ohne dass es dir zu lang wurde. Nichts davon hat dir gefehlt, solange du es mit nichts verglichen hast.\n\nDas ist der eigentliche Vorgang: Der Mangel entsteht nicht im Tag. Er entsteht in den neunzig Sekunden danach. Wir bewerten Tage danach, ob sie sich erzählen lassen — und ein Tag ohne Ereignis hat kein Bild, keine Pointe und keinen Ort. Also fällt er durch.\n\nDabei sind es genau diese Tage, nach denen dein Kopf leiser ist. Nicht die mit dem Berg.\n\nWisch dich durch — und dann leg es weg. Der Tag war längst zu Ende, bevor du nachgesehen hast, ob er gereicht hat.\n\n#stille #achtsamkeit #ruhe #entschleunigung #innerearbeit",
   "slides": [
     {
       "typ": "hook",
       "headline": "Du hast heute nichts verpasst",
-      "unterzeile": "Der Lärm war nur lauter als du."
+      "unterzeile": "Das Gefühl kam um halb elf, mit dem Handy."
     },
     {
       "typ": "inhalt",
       "ziffer": "01",
-      "headline": "Ein Tag ohne Ereignis",
-      "text": "Er zählt trotzdem zu deinem Leben."
+      "headline": "Der Tag war in Ordnung",
+      "text": "Bis du gesehen hast, was andere aus ihrem gemacht haben."
     },
     {
       "typ": "inhalt",
       "ziffer": "02",
-      "headline": "Nicht jede Leere ist Mangel",
-      "text": "Manche ist einfach Platz, den niemand füllen muss."
+      "headline": "Du hast gekocht und gelesen",
+      "text": "Nichts davon lässt sich in einem Satz erzählen."
     },
     {
       "typ": "cta",
-      "headline": "Bleib heute unbeantwortet",
-      "text": "Die Welt wartet gut ohne dich."
+      "headline": "Kein Tag zum Erzählen",
+      "text": "Das sind die, nach denen dein Kopf leiser ist."
     }
-  ]
+  ],
+  "format": "karussell"
 }
