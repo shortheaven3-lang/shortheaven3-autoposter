@@ -189,14 +189,15 @@
       "post": 32,
       "saeule": "Die Stille",
       "vorlage": "dunkel",
+      "format": "karussell",
+      "caption": "Du hast heute nichts verpasst.\n\nEs fühlt sich nur so an, weil überall etwas passiert und du gerade nichts davon warst. Aber Anwesenheit ist keine Leistung.\n\nEin stiller Tag verschwindet nicht aus deinem Leben. Er ist der Teil, an dem du später merkst, dass du geatmet hast.\n\nWisch dich durch.\n\n#stille #achtsamkeit #ruhe #entschleunigung #innerearbeit",
+      "published_id": null,
       "images": [
         "post-32-slide-1.jpg",
         "post-32-slide-2.jpg",
         "post-32-slide-3.jpg",
         "post-32-slide-4.jpg"
-      ],
-      "caption": "Du hast heute nichts verpasst.\n\nEs fühlt sich nur so an, weil überall etwas passiert und du gerade nichts davon warst. Aber Anwesenheit ist keine Leistung.\n\nEin stiller Tag verschwindet nicht aus deinem Leben. Er ist der Teil, an dem du später merkst, dass du geatmet hast.\n\nWisch dich durch.\n\n#stille #achtsamkeit #ruhe #entschleunigung #innerearbeit",
-      "published_id": null
+      ]
     }
   ]
 }
