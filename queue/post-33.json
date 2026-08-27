@@ -1,0 +1,42 @@
+{
+  "post": 33,
+  "date": "2026-08-28",
+  "saeule": "Der Spiegel",
+  "caption": "Du erzählst es als Anekdote.\n\nFreitagabend, sechs Leute an einem Küchentisch, die zweite Flasche ist offen. Jemand fragt, wie das damals ausgegangen ist. Du erzählst es in drei Minuten, mit einer Pointe am Schluss, und alle lachen an der Stelle, an der du es geplant hast. Dann schenkst du nach.\n\nDiese Fassung hast du oft erzählt. Sie ist kürzer geworden, glatter, an zwei Stellen lustiger als beim ersten Mal. Was dabei rausgefallen ist, fällt dir nicht mehr auf. Die Geschichte funktioniert ja.\n\nDie Pointe ist kein Zufall. Sie ist eine Tür, die zugeht: Wer lacht, fragt nicht nach. Und am Küchentisch hast du keine halbe Stunde für die Fassung ohne Pointe, in der du nicht gut aussiehst. Also nimmst du die schnelle. Jedes Mal.\n\nNach dem zwanzigsten Mal ist die schnelle Fassung die einzige, die du noch abrufen kannst. Sie hat die andere überschrieben, ohne dass jemand widersprochen hätte.\n\nWisch dich durch. Und überleg, wem du sie einmal ohne die Pointe erzählen würdest.\n\n#selbstreflexion #innerearbeit #nähe #ehrlichkeit #psychologie",
+  "slides": [
+    {
+      "typ": "hook",
+      "headline": "Du erzählst es als Anekdote",
+      "unterzeile": "Und alle lachen an der geplanten Stelle"
+    },
+    {
+      "typ": "inhalt",
+      "ziffer": "01",
+      "headline": "Die Pointe steht vorher fest",
+      "text": "Du weißt schon beim ersten Satz, wo gelacht wird."
+    },
+    {
+      "typ": "inhalt",
+      "ziffer": "02",
+      "headline": "Du redest schneller als sonst",
+      "text": "Am Küchentisch überholst du die Nachfrage, bevor sie jemand stellt."
+    },
+    {
+      "typ": "inhalt",
+      "ziffer": "03",
+      "headline": "Jemand fragt doch nach",
+      "text": "Du sagst, das sei lange her, und schenkst nach."
+    },
+    {
+      "typ": "inhalt",
+      "ziffer": "04",
+      "headline": "Im Auto wird es still",
+      "text": "Auf dem Heimweg läuft kein Radio, und der Satz kommt zurück."
+    },
+    {
+      "typ": "cta",
+      "headline": "Erzähl es einmal ohne Pointe",
+      "text": "Einem Menschen, der an der Stelle nicht lachen muss."
+    }
+  ]
+}
