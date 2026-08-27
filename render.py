@@ -127,19 +127,41 @@ def satzblock(d, slide):
     draw_block(d, txt, f_txt, y_linie + ABSTAND_SATZ, 48)
 
 
-def render_slide(slide, seed):
+# Vier Titelbilder statt einem. Im Profilraster lagen bisher alle Beitraege
+# als dieselbe zentrierte Zeile uebereinander - kein Beitrag war vom naechsten
+# zu unterscheiden. Jede Saeule bekommt darum ihre eigene Anmutung: Groesse,
+# Hoehe im Bild und eine Haarlinie ueber der Zeile beim Ritual.
+HOOK_VARIANTEN = {
+    "Der Spiegel": {"groesse": 74, "mitte": 570, "linie_oben": False},
+    "Das Ritual": {"groesse": 68, "mitte": 470, "linie_oben": True},
+    "Die Frage": {"groesse": 88, "mitte": 560, "linie_oben": False},
+    "Die Stille": {"groesse": 60, "mitte": 720, "linie_oben": False},
+}
+
+
+def hook_variante(saeule):
+    return HOOK_VARIANTEN.get(saeule, HOOK_VARIANTEN["Der Spiegel"])
+
+
+def render_slide(slide, seed, saeule=""):
     img = Image.new("RGB", (W, H), BG)
     d = ImageDraw.Draw(img)
     typ = slide.get("typ", "inhalt")
 
     if typ == "hook":
-        f_head = font(ITALIC, 74)
+        v = hook_variante(saeule)
+        f_head = font(ITALIC, v["groesse"])
+        leading = v["groesse"] + 12
         lines = wrap(d, slide["headline"], f_head, 800)
-        y_head = 535 - max(0, len(lines) - 2) * 37
-        end = draw_block(d, lines, f_head, y_head, 74)
-        if slide.get("unterzeile"):
-            f_sub = font(ITALIC, 45)
-            draw_block(d, wrap(d, slide["unterzeile"], f_sub, 740), f_sub, max(718, end + 30), 56)
+        f_sub = font(ITALIC, 45)
+        sub = wrap(d, slide["unterzeile"], f_sub, 740) if slide.get("unterzeile") else []
+        hoehe = len(lines) * leading + (75 if sub else 0) + len(sub) * 56
+        y_head = int(v["mitte"] - hoehe / 2)
+        if v["linie_oben"]:
+            rule(d, y_head - 70)
+        end = draw_block(d, lines, f_head, y_head, leading)
+        if sub:
+            draw_block(d, sub, f_sub, end + 75, 56)
         tracked(d, "WISCHEN  →", font(REGULAR, 21), 1183, 3)
 
     elif typ == "cta":
@@ -216,7 +238,7 @@ def verarbeiten(pfad):
     namen = []
     for i, slide in enumerate(spec["slides"], 1):
         name = f"post-{nr}-slide-{i}.jpg"
-        render_slide(slide, seed=nr * 100 + i).save(
+        render_slide(slide, seed=nr * 100 + i, saeule=spec.get("saeule", "")).save(
             os.path.join(out_dir, name), "JPEG", quality=92, subsampling=0
         )
         namen.append(name)
