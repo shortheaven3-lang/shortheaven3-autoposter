@@ -88,6 +88,26 @@ def rule(draw, y):
     draw.rectangle([490, y, 589, y + 1], fill=FG)
 
 
+# Satzspiegel der Inhalts- und Schluss-Slides: Der Block aus Headline, Trennlinie und
+# Satz wird um die optische Mitte zentriert, statt auf feste Werte gesetzt zu werden.
+# Vorher sass er bei y~583 und liess unten rund 570 px leer - im Feed-Vorschaubild
+# wirkte das kopflastig. Die Abstaende im Block bleiben wie zuvor.
+MITTE = 660
+ABSTAND_LINIE = 167
+ABSTAND_SATZ = 96
+
+
+def satzblock(d, slide):
+    f_head = font(ITALIC, 64)
+    f_txt = font(ITALIC, 40)
+    head = wrap(d, slide["headline"], f_head, 820)
+    txt = wrap(d, slide.get("text", ""), f_txt, 760)
+    hoehe = len(head) * 71 + ABSTAND_LINIE + ABSTAND_SATZ + len(txt) * 48
+    y_linie = draw_block(d, head, f_head, int(MITTE - hoehe / 2), 71) + ABSTAND_LINIE
+    rule(d, y_linie)
+    draw_block(d, txt, f_txt, y_linie + ABSTAND_SATZ, 48)
+
+
 def render_slide(slide, seed):
     img = Image.new("RGB", (W, H), BG)
     d = ImageDraw.Draw(img)
@@ -104,21 +124,13 @@ def render_slide(slide, seed):
         tracked(d, "WISCHEN  →", font(REGULAR, 21), 1183, 3)
 
     elif typ == "cta":
-        f_head = font(ITALIC, 64)
-        draw_block(d, wrap(d, slide["headline"], f_head, 820), f_head, 392, 71)
-        rule(d, 630)
-        f_txt = font(ITALIC, 40)
-        draw_block(d, wrap(d, slide.get("text", ""), f_txt, 760), f_txt, 726, 48)
+        satzblock(d, slide)
         tracked(d, "@SHORTHEAVEN3", font(REGULAR, 21), 1183, 3)
 
     else:
         if slide.get("ziffer"):
             tracked(d, slide["ziffer"], font(REGULAR, 16), 159, 5)
-        f_head = font(ITALIC, 64)
-        draw_block(d, wrap(d, slide["headline"], f_head, 820), f_head, 392, 71)
-        rule(d, 630)
-        f_txt = font(ITALIC, 40)
-        draw_block(d, wrap(d, slide.get("text", ""), f_txt, 760), f_txt, 726, 48)
+        satzblock(d, slide)
 
     return grain(img, seed)
 
