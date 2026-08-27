@@ -35,7 +35,9 @@ jobs:
         run: |
           git config user.name "shortheaven3-bot"
           git config user.email "actions@github.com"
-          git add images videos schedule.json
+          git add images schedule.json
+          # videos/ existiert erst, wenn das erste Reel gerendert wurde
+          [ -d videos ] && git add videos || true
           if git diff --cached --quiet; then
             echo "Keine Aenderungen."
           else
