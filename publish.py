@@ -111,14 +111,35 @@ def wait_for_container(container_id: str, token: str, timeout: int = 120) -> Non
     raise PublishError(f"Container {container_id} wurde nicht rechtzeitig fertig.")
 
 
+def alt_text_fuer(post: dict, nummer: int | None = None) -> str:
+    """Alternativtext aus der ersten Caption-Zeile. Blinde Leser bekommen sonst
+    nur 'Bild', und Instagram wertet den Text als zusaetzliches Signal."""
+    zeilen = [z.strip() for z in (post.get("caption") or "").splitlines() if z.strip()]
+    erste = zeilen[0] if zeilen else ""
+    karte = f" Karte {nummer}." if nummer else ""
+    return f"Textkarte auf dunkelblauem Grund, heller Serifensatz.{karte} {erste}".strip()[:1000]
+
+
 def create_image_container(ig_user_id: str, token: str, image_url: str,
-                           caption: str, is_carousel_item: bool = False) -> str:
+                           caption: str, is_carousel_item: bool = False,
+                           alt_text: str | None = None) -> str:
     params = {"image_url": image_url}
     if is_carousel_item:
         params["is_carousel_item"] = "true"
     else:
         params["caption"] = caption
-    result = graph_post(f"{ig_user_id}/media", token, **params)
+    if alt_text:
+        params["alt_text"] = alt_text
+    try:
+        result = graph_post(f"{ig_user_id}/media", token, **params)
+    except PublishError:
+        if not alt_text:
+            raise
+        # Kennt die API-Version alt_text nicht, ist ein Beitrag ohne
+        # Alternativtext immer noch besser als ein ausgefallener Lauf.
+        print("[alt-text] abgelehnt - Container wird ohne Alternativtext erzeugt")
+        params.pop("alt_text")
+        result = graph_post(f"{ig_user_id}/media", token, **params)
     container_id = result.get("id")
     if not container_id:
         raise PublishError(f"Keine Container-ID erhalten: {result}")
@@ -304,7 +325,8 @@ def main() -> int:
         children = []
         for name in post["images"]:
             cid = create_image_container(ig_user_id, token, image_url_for(name),
-                                         caption="", is_carousel_item=True)
+                                         caption="", is_carousel_item=True,
+                                         alt_text=alt_text_fuer(post, len(children) + 1))
             wait_for_container(cid, token)
             children.append(cid)
             print(f"[container] Kind-Container {cid} für {name}")
@@ -315,7 +337,8 @@ def main() -> int:
     else:
         container_id = create_image_container(ig_user_id, token,
                                               image_url_for(post["image"]),
-                                              post["caption"])
+                                              post["caption"],
+                                              alt_text=alt_text_fuer(post))
         print(f"[container] Container {container_id}")
         wait_for_container(container_id, token)
 
