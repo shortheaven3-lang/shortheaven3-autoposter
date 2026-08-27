@@ -13,6 +13,7 @@ on:
 
 permissions:
   contents: write
+  issues: write
 
 concurrency:
   group: instagram-autoposter
@@ -49,3 +50,13 @@ jobs:
           else
             echo "Keine Änderung an schedule.json — nichts zu committen."
           fi
+
+      - name: Fehlschlag melden
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh issue create \
+            --repo "${{ github.repository }}" \
+            --title "Lauf fehlgeschlagen: ${{ github.workflow }}" \
+            --body "Der Lauf ist fehlgeschlagen. Protokoll: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
