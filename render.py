@@ -14,6 +14,23 @@ import sys
 
 from PIL import Image, ImageDraw, ImageFont
 
+# Formatmuster ueber acht Beitraege. Strikte Alternation ginge nicht:
+# die Saeulen drehen sich im Viererzyklus, ein Zweierwechsel teilt den glatt
+# und jede Saeule bekaeme fuer immer dasselbe Format. Dieses Muster gibt
+# jeder Saeule beide Formate; dafuer stehen zweimal je acht Beitraege zwei
+# gleiche nebeneinander.
+FORMATMUSTER = ("reel", "karussell", "reel", "karussell",
+                "karussell", "reel", "karussell", "reel")
+
+
+def format_fuer(spec):
+    """Vorgabe aus der Queue schlaegt das Muster."""
+    gewuenscht = (spec.get("format") or "").strip().lower()
+    if gewuenscht in ("reel", "karussell"):
+        return gewuenscht
+    return FORMATMUSTER[spec["post"] % len(FORMATMUSTER)]
+
+
 W, H, CX = 1080, 1350, 540
 BG = (27, 35, 54)
 FG = (158, 130, 106)
@@ -135,7 +152,7 @@ def render_slide(slide, seed):
     return grain(img, seed)
 
 
-def eintragen(spec, namen):
+def eintragen(spec, medien, art):
     pfad = os.path.join(BASE, "schedule.json")
     plan = json.load(open(pfad, encoding="utf-8"))
     eintrag = {
@@ -143,10 +160,14 @@ def eintragen(spec, namen):
         "post": spec["post"],
         "saeule": spec.get("saeule", ""),
         "vorlage": "dunkel",
-        "images": namen,
+        "format": art,
         "caption": spec["caption"],
         "published_id": None,
     }
+    if art == "reel":
+        eintrag["video"] = medien
+    else:
+        eintrag["images"] = medien
     for i, p in enumerate(plan["posts"]):
         if p["post"] == spec["post"]:
             if p.get("published_id"):
@@ -163,9 +184,31 @@ def eintragen(spec, namen):
     print(f"schedule.json: Post {spec['post']} fuer {spec['date']} eingetragen.")
 
 
+def schon_veroeffentlicht(nr):
+    """Verhindert, dass ein laengst gepostetet Beitrag neu gerendert wird."""
+    pfad = os.path.join(BASE, "schedule.json")
+    if not os.path.exists(pfad):
+        return False
+    plan = json.load(open(pfad, encoding="utf-8"))
+    return any(p["post"] == nr and p.get("published_id") for p in plan["posts"])
+
+
 def verarbeiten(pfad):
     spec = json.load(open(pfad, encoding="utf-8"))
     nr = spec["post"]
+    if schon_veroeffentlicht(nr):
+        print(f"Beitrag {nr} ist veroeffentlicht - uebersprungen.")
+        return
+    art = format_fuer(spec)
+    print(f"Beitrag {nr}: Format {art}")
+
+    if art == "reel":
+        import render_reel  # erst hier, damit Karussell-Laeufe ohne numpy/scipy gehen
+        name = f"post-{nr}.mp4"
+        render_reel.bauen(spec, os.path.join(BASE, "videos", name))
+        eintragen(spec, name, art)
+        return
+
     out_dir = os.path.join(BASE, "images")
     os.makedirs(out_dir, exist_ok=True)
     namen = []
@@ -176,7 +219,7 @@ def verarbeiten(pfad):
         )
         namen.append(name)
         print("gerendert:", name)
-    eintragen(spec, namen)
+    eintragen(spec, namen, art)
 
 
 def main():

@@ -5,6 +5,8 @@ on:
     paths:
       - 'queue/**.json'
       - 'render.py'
+      - 'render_reel.py'
+      - 'musik.py'
   workflow_dispatch:
 
 permissions:
@@ -19,8 +21,11 @@ jobs:
       - name: Schriften installieren
         run: sudo apt-get update -qq && sudo apt-get install -y -qq fonts-ebgaramond
 
-      - name: Pillow installieren
-        run: pip install --quiet Pillow
+      - name: ffmpeg sicherstellen
+        run: ffmpeg -version >/dev/null 2>&1 || sudo apt-get install -y -qq ffmpeg
+
+      - name: Python-Pakete installieren
+        run: pip install --quiet Pillow numpy scipy
 
       - name: Rendern
         run: python3 render.py --alle
@@ -29,10 +34,10 @@ jobs:
         run: |
           git config user.name "shortheaven3-bot"
           git config user.email "actions@github.com"
-          git add images schedule.json
+          git add images videos schedule.json
           if git diff --cached --quiet; then
             echo "Keine Aenderungen."
           else
-            git commit -m "Slides gerendert und Plan aktualisiert"
+            git commit -m "Beitrag gerendert und Plan aktualisiert"
             git push
           fi
