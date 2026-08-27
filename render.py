@@ -14,13 +14,15 @@ import sys
 
 from PIL import Image, ImageDraw, ImageFont
 
-# Formatmuster ueber acht Beitraege. Strikte Alternation ginge nicht:
-# die Saeulen drehen sich im Viererzyklus, ein Zweierwechsel teilt den glatt
-# und jede Saeule bekaeme fuer immer dasselbe Format. Dieses Muster gibt
-# jeder Saeule beide Formate; dafuer stehen zweimal je acht Beitraege zwei
-# gleiche nebeneinander.
-FORMATMUSTER = ("reel", "karussell", "reel", "karussell",
-                "karussell", "reel", "karussell", "reel")
+# Formatmuster ueber acht Beitraege: sechs Reels, zwei Karussells.
+# Grund fuer das Uebergewicht: Reels sind die einzige Flaeche, auf der
+# Instagram Inhalte an Menschen ausspielt, die dem Konto nicht folgen.
+# Karussells erreichen vor allem bestehende Follower und sammeln Speicherungen -
+# bei einem Konto ohne Followerbasis ist das die falsche Reihenfolge.
+# Die Verteilung ist so gelegt, dass jede der vier Saeulen beide Formate
+# bekommt und Beitrag 33 (bereits geplant) Karussell bleibt.
+FORMATMUSTER = ("reel", "karussell", "reel", "reel",
+                "reel", "karussell", "reel", "reel")
 
 
 def format_fuer(spec):
