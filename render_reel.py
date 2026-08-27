@@ -99,15 +99,27 @@ def tracked(d, text, fnt, y, tracking):
         x += w + tracking
 
 
-def ebene(slide: dict) -> np.ndarray:
+# Titelbild je Saeule: Schriftgroesse und Hoehe im Bild unterscheiden sich,
+# damit sich die Beitraege im Profilraster nicht gleichen. Der erste Frame des
+# Reels ist das Vorschaubild - er entscheidet, ob jemand haengen bleibt.
+HOOK_VARIANTEN = {
+    "Der Spiegel": {"groesse": 88, "mitte": 865, "linie_oben": False},
+    "Das Ritual": {"groesse": 80, "mitte": 770, "linie_oben": True},
+    "Die Frage": {"groesse": 104, "mitte": 855, "linie_oben": False},
+    "Die Stille": {"groesse": 72, "mitte": 975, "linie_oben": False},
+}
+
+
+def ebene(slide: dict, saeule: str = "") -> np.ndarray:
     """Fertige RGBA-Ebene, Satzspiegel um SAFE_MID zentriert."""
     img = Image.new("RGBA", (W, H), (0, 0, 0, 0))
     d = ImageDraw.Draw(img)
     typ = slide.get("typ", "inhalt")
     gross = typ == "hook"
+    v = HOOK_VARIANTEN.get(saeule, HOOK_VARIANTEN["Der Spiegel"])
 
-    f_head = ImageFont.truetype(ITALIC, 88 if gross else 76)
-    lead_h = 100 if gross else 88
+    f_head = ImageFont.truetype(ITALIC, v["groesse"] if gross else 76)
+    lead_h = (v["groesse"] + 12) if gross else 88
     kopf = wrap(d, slide["headline"], f_head, 900)
 
     rumpf_text = slide.get("unterzeile") if gross else slide.get("text", "")
@@ -117,7 +129,9 @@ def ebene(slide: dict) -> np.ndarray:
 
     linie = typ != "hook"
     hoehe = len(kopf) * lead_h + (58 if linie else 40 if rumpf else 0) + len(rumpf) * lead_t
-    y = SAFE_MID - hoehe // 2
+    y = (v["mitte"] if gross else SAFE_MID) - hoehe // 2
+    if gross and v["linie_oben"]:
+        d.rectangle([492, y - 96, 587, y - 95], fill=FG + (185,))
 
     if slide.get("ziffer"):
         tracked(d, slide["ziffer"], ImageFont.truetype(REGULAR, 20), y - 118, 6)
@@ -166,7 +180,7 @@ def bauen(spec: dict, ziel: str) -> str:
                          anbieter=os.environ.get("MUSIK_ANBIETER", "eigen"))
 
         felder = [feld(nr * 100 + i) for i in range(len(slides))]
-        ebenen = [ebene(s) for s in slides]
+        ebenen = [ebene(s, spec.get("saeule", "")) for s in slides]
         rng = np.random.default_rng(7)
         korn = [rng.normal(0, 2.6, (H, W, 1)).astype(np.float32) for _ in range(10)]
 
