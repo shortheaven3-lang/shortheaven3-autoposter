@@ -1,0 +1,43 @@
+{
+  "post": 34,
+  "date": "2026-08-29",
+  "saeule": "Das Ritual",
+  "format": "karussell",
+  "caption": "Du tippst, löschst, tippst wieder.\n\nDienstagabend, zehn nach neun. Du willst deine Kollegin fragen, ob sie den Termin am Donnerstag übernimmt. Zwei Zeilen stehen da, du liest sie, du löschst sie. Die dritte Fassung beginnt mit: Sorry, ganz kurz, ich weiß, du hast gerade viel um die Ohren. Die schickst du ab.\n\nIn keiner der drei Fassungen war der erste Satz die Bitte. Er war jedes Mal die Entschuldigung dafür, dass du sie stellst. Zwölf Wörter, die deine Kollegin überliest und die die Frage verschieben: Sie kommt nicht als Frage an, sondern als Zumutung, die du selbst schon eingeräumt hast.\n\nDas Ritual dauert vier Sekunden. Bevor du auf Senden drückst, gehst du an den Anfang und löschst den ersten Satz. Nur den ersten. Wenn danach noch alles dasteht, was die andere Person wissen muss, war er Anlauf. Er steht fast immer noch da.\n\nNach zwei Wochen merkst du es schon beim Tippen. Der Satz kommt weiter. Er kommt nur nicht mehr durch.\n\nWisch dich durch. Und beim nächsten Mal schickst du den zweiten Satz zuerst.\n\n#ritual #kommunikation #grenzensetzen #selbstreflexion #innerearbeit",
+  "slides": [
+    {
+      "typ": "hook",
+      "headline": "Du tippst, löschst, tippst wieder",
+      "unterzeile": "Und schickst am Ende die vorsichtige Fassung"
+    },
+    {
+      "typ": "inhalt",
+      "ziffer": "01",
+      "headline": "Die Nachricht steht seit Minuten",
+      "text": "Du hast sie dreimal umgeschrieben, der Daumen bleibt über dem Pfeil."
+    },
+    {
+      "typ": "inhalt",
+      "ziffer": "02",
+      "headline": "Lies den ersten Satz",
+      "text": "Dort steht: Sorry, ganz kurz, ich weiß, du hast gerade viel."
+    },
+    {
+      "typ": "inhalt",
+      "ziffer": "03",
+      "headline": "Streich ihn weg",
+      "text": "Übrig bleibt ein Satz, in dem deine Bitte steht."
+    },
+    {
+      "typ": "inhalt",
+      "ziffer": "04",
+      "headline": "Schick es so ab",
+      "text": "Am nächsten Morgen liegt eine Antwort da, wie sonst auch."
+    },
+    {
+      "typ": "cta",
+      "headline": "Heute Abend, eine Nachricht",
+      "text": "Streich den ersten Satz und schick den zweiten zuerst."
+    }
+  ]
+}
