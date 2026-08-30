@@ -1,0 +1,42 @@
+{
+  "post": 35,
+  "date": "2026-08-30",
+  "saeule": "Die Frage",
+  "caption": "Wem antwortest du am schnellsten?\n\nDonnerstag, 18:40. Du stehst im Treppenhaus, in der einen Hand die Einkaufstüte, in der anderen das Handy. Dein Chef fragt nach einer Datei. Du tippst die Antwort, bevor du die Wohnungstür aufgeschlossen hast. Neun Sekunden.\n\nIm selben Posteingang liegt die Sprachnachricht deiner Schwester. Seit Dienstag. Du hast sie zweimal geöffnet und danach wieder auf ungelesen gestellt, damit sie oben bleibt. Vergessen hast du sie nie. Beantwortet auch nicht.\n\nDeine Antwortzeiten sind eine Rangfolge, die du nie aufgestellt hast. Sie steht in deinem Telefon, mit Zeitstempel, und sie fällt anders aus als jede Liste, die du aufschreiben würdest, wenn dich jemand nach deinen wichtigsten Menschen fragt.\n\nGanz oben steht, wen du nicht enttäuschen willst. Ganz unten steht, wer dir sicher verzeiht. So kommt es, dass die Nachsichtigsten am längsten warten. Das macht dich zu keinem schlechten Menschen. Es ist nur eine Entscheidung, die du jeden Tag triffst, ohne sie je ausgesprochen zu haben.\n\nWisch dich durch. Und dann sieh nach, wer bei dir seit Dienstag wartet.\n\n#fragederwoche #beziehungen #selbstreflexion #achtsamkeit #psychologie",
+  "slides": [
+    {
+      "typ": "hook",
+      "headline": "Wem antwortest du am schnellsten?",
+      "unterzeile": "Zwei Nachrichten, neun Sekunden, drei Tage."
+    },
+    {
+      "typ": "inhalt",
+      "ziffer": "01",
+      "headline": "Neun Sekunden",
+      "text": "Dein Chef schreibt um 18:40, du tippst noch im Treppenhaus zurück."
+    },
+    {
+      "typ": "inhalt",
+      "ziffer": "02",
+      "headline": "Seit Dienstag im Posteingang",
+      "text": "Die Sprachnachricht deiner Schwester hast du zweimal geöffnet und wieder weggelegt."
+    },
+    {
+      "typ": "inhalt",
+      "ziffer": "03",
+      "headline": "Eine Rangfolge mit Zeitstempel",
+      "text": "Dein Telefon sortiert deine Menschen, ohne dass du je sortiert hast."
+    },
+    {
+      "typ": "inhalt",
+      "ziffer": "04",
+      "headline": "Wen du nicht enttäuschen willst",
+      "text": "Ganz oben steht selten der Mensch, an dem dir am meisten liegt."
+    },
+    {
+      "typ": "cta",
+      "headline": "Öffne deinen Chatverlauf",
+      "text": "Sieh dir die letzten zehn Nachrichten an und wer wie lange gewartet hat."
+    }
+  ]
+}
