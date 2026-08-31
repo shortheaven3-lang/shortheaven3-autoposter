@@ -18,6 +18,7 @@ from PIL import Image, ImageDraw, ImageFont
 
 import musik
 import hintergrund
+import stimme
 
 W, H, CX, FPS = 1080, 1920, 540, 24
 BG = (27, 35, 54)
@@ -58,19 +59,35 @@ ORDNER = os.path.join(BASE, "backgrounds")
 ZUG_W, ZUG_H = int(W * 1.25), int(H * 1.25)  # groesser als das Bild, fuer den langsamen Zug
 
 
-def _bildpfad(spec: dict) -> str | None:
-    """Ein Hintergrundbild je Beitrag. None heisst: prozedurales Farbfeld."""
+def _je_slide(wert, si: int, n: int):
+    """Ein Wert kann fuer alle Slides gelten oder je Slide einer sein."""
+    if isinstance(wert, list):
+        return wert[si] if si < len(wert) else (wert[-1] if wert else None)
+    return wert
+
+
+def _bildpfad(spec: dict, si: int, n: int) -> str | None:
+    """Hintergrundbild fuer Slide si. None heisst: prozedurales Farbfeld.
+
+    "bild" und "hintergrund" duerfen eine Liste sein - dann bekommt jede Slide
+    ihr eigenes Motiv, passend zu dem Satz, der gerade steht. Als einzelner Wert
+    gilt dasselbe Bild fuer den ganzen Beitrag.
+    """
     nr = spec["post"]
-    eigen = spec.get("hintergrund")
+    mehrere = isinstance(spec.get("bild"), list) or isinstance(spec.get("hintergrund"), list)
+    marke = f"post-{nr}-{si + 1}" if mehrere else f"post-{nr}"
+
+    eigen = _je_slide(spec.get("hintergrund"), si, n)
     if eigen:
         pfad = eigen if os.path.isabs(eigen) else os.path.join(ORDNER, eigen)
         if os.path.exists(pfad):
             return pfad
         print(f"  hintergrund {eigen!r} fehlt - weiter mit Motiv oder Farbfeld")
 
-    pfad = os.path.join(ORDNER, f"post-{nr}.jpg")
-    merk = os.path.join(ORDNER, f"post-{nr}.quelle")
-    bild, motiv = spec.get("bild"), spec.get("motiv")
+    pfad = os.path.join(ORDNER, f"{marke}.jpg")
+    merk = os.path.join(ORDNER, f"{marke}.quelle")
+    bild = _je_slide(spec.get("bild"), si, n)
+    motiv = _je_slide(spec.get("motiv"), si, n)
 
     vorhanden = os.path.exists(pfad)
     if vorhanden:
@@ -101,18 +118,23 @@ def _bildpfad(spec: dict) -> str | None:
 
 
 def hintergruende(spec: dict) -> list[np.ndarray]:
-    """Ein Feld je Slide. Beim Motivbild dasselbe fuer alle - der langsame Zug
-    macht daraus trotzdem vier verschiedene Ausschnitte."""
+    """Ein Feld je Slide. Gleiche Datei wird nur einmal aufbereitet."""
     n = len(spec["slides"])
-    pfad = _bildpfad(spec)
-    if pfad:
-        try:
-            bild = hintergrund.aufbereiten(pfad, ZUG_W, ZUG_H, mitte=SAFE_MID / H)
-            print(f"  Hintergrund: {os.path.relpath(pfad, BASE)}")
-            return [bild] * n
-        except Exception as e:
-            print(f"  {pfad} unbrauchbar ({type(e).__name__}: {e}) - Farbfeld")
-    return [hintergrund.feld(spec["post"] * 100 + i, ZUG_W, ZUG_H) for i in range(n)]
+    felder, lager = [], {}
+    for si in range(n):
+        pfad = _bildpfad(spec, si, n)
+        if pfad and pfad not in lager:
+            try:
+                lager[pfad] = hintergrund.aufbereiten(pfad, ZUG_W, ZUG_H,
+                                                      mitte=SAFE_MID / H)
+                print(f"  Slide {si + 1}: {os.path.relpath(pfad, BASE)}")
+            except Exception as e:
+                print(f"  {pfad} unbrauchbar ({type(e).__name__}: {e}) - Farbfeld")
+                lager[pfad] = None
+        fertig = lager.get(pfad) if pfad else None
+        felder.append(fertig if fertig is not None
+                      else hintergrund.feld(spec["post"] * 100 + si, ZUG_W, ZUG_H))
+    return felder
 
 
 # ------------------------------------------------------------------ Textebenen
@@ -195,25 +217,32 @@ def ebene(slide: dict, saeule: str = "") -> np.ndarray:
 
 
 # ------------------------------------------------------------------------ Film
-def zeiten(slides: list) -> list[float]:
-    """Standzeit nach Lesemenge statt nach fester Zahl.
+VORLAUF, NACHLAUF = 0.7, 1.5   # Stille vor und nach dem gesprochenen Satz
+UEBERBLENDUNG = 0.9            # Sekunden, in denen zwei Hintergruende ineinander laufen
 
-    Vorher stand jeder Satz gleich lang, egal wie viel darauf zu lesen war - bei
-    den laengeren Slides musste man das Reel anhalten. Jetzt bekommt jede Slide
-    2,5 s Grundzeit plus 0,4 s je Wort, mindestens 6 s. Damit ein Beitrag mit
-    sechs Slides nicht ausufert, wird die Gesamtlaenge bei GESAMT_MAX gedeckelt
-    und proportional zurueckgenommen, aber nie unter die Untergrenze.
+
+def zeiten(slides: list, mindest: list[float] | None = None) -> list[float]:
+    """Standzeit nach Lesemenge - und, wenn gesprochen wird, nach der Sprechdauer.
+
+    Vorher stand jeder Satz gleich lang, egal wie viel darauf zu lesen war. Jetzt
+    bekommt jede Slide 2,5 s Grundzeit plus 0,4 s je Wort, mindestens 6 s. Wird
+    vorgelesen, ist die Sprechdauer plus Vor- und Nachlauf die harte Untergrenze:
+    ein Satz darf nie abgeschnitten werden, auch nicht von der Deckelung.
     """
     GRUND, JE_WORT, MIN, MAX, GESAMT_MAX = 2.5, 0.4, 6.0, 10.5, 44.0
-    dauer = []
-    for s in slides:
+    mindest = mindest or [0.0] * len(slides)
+    boden, dauer = [], []
+    for s, m in zip(slides, mindest):
         rumpf = s.get("unterzeile") if s.get("typ") == "hook" else s.get("text", "")
         woerter = len((s.get("headline", "") + " " + (rumpf or "")).split())
-        dauer.append(min(MAX, max(MIN, GRUND + JE_WORT * woerter)))
-    gesamt = sum(dauer)
-    if gesamt > GESAMT_MAX:
-        f = GESAMT_MAX / gesamt
-        dauer = [max(MIN, d * f) for d in dauer]
+        b = max(MIN, m)
+        boden.append(b)
+        dauer.append(max(b, min(MAX, GRUND + JE_WORT * woerter)))
+    gesamt, bodensumme = sum(dauer), sum(boden)
+    if gesamt > GESAMT_MAX and bodensumme < GESAMT_MAX:
+        # Nur der Anteil ueber den Untergrenzen wird gekuerzt.
+        f = (GESAMT_MAX - bodensumme) / (gesamt - bodensumme)
+        dauer = [b + (d - b) * f for d, b in zip(dauer, boden)]
     return [round(d, 2) for d in dauer]
 
 
@@ -223,15 +252,33 @@ def ease(t):
 
 def bauen(spec: dict, ziel: str) -> str:
     slides = spec["slides"]
-    dauer = zeiten(slides)
-    gesamt = sum(dauer)
     nr = spec["post"]
+
+    # Die Stimme kommt vor der Zeitrechnung: wie lange eine Slide steht, haengt
+    # davon ab, wie lange ihr Satz gesprochen dauert.
+    clips = None
+    if spec.get("stimme", True):
+        clips = stimme.aufnehmen([stimme.satz_fuer(s) for s in slides],
+                                 os.path.join(BASE, "stimmen"))
+        if clips is None:
+            print("  ohne Stimme - nur Musik")
+    sprech = [c.shape[0] / stimme.SR for c in clips] if clips else None
+    dauer = zeiten(slides, [VORLAUF + d + NACHLAUF for d in sprech] if sprech else None)
+    gesamt = sum(dauer)
 
     os.makedirs(os.path.dirname(os.path.abspath(ziel)) or ".", exist_ok=True)
     with tempfile.TemporaryDirectory() as tmp:
         ton = musik.spur(os.path.join(tmp, "ton.wav"), gesamt,
                          spec.get("saeule", ""), seed=nr,
                          anbieter=os.environ.get("MUSIK_ANBIETER", "eigen"))
+        if clips:
+            starts, t0 = [], 0.0
+            for d in dauer:
+                starts.append(t0 + VORLAUF)
+                t0 += d
+            ton = stimme.mischen(stimme.wav_lesen(ton), clips, starts,
+                                 os.path.join(tmp, "misch.wav"))
+            print(f"  Stimme: {len(clips)} Saetze, {sum(sprech):.1f} s gesprochen")
 
         felder = hintergruende(spec)
         ebenen = [ebene(s, spec.get("saeule", "")) for s in slides]
@@ -248,20 +295,28 @@ def bauen(spec: dict, ziel: str) -> str:
              "-shortest", "-movflags", "+faststart", ziel],
             stdin=subprocess.PIPE)
 
-        k = 0
+        k, letztes = 0, None
         for si, (sl, dur) in enumerate(zip(slides, dauer)):
             n = int(dur * FPS)
             bg, tx = felder[si], ebenen[si]
             BH, BW = bg.shape[:2]
+            # Nur ueberblenden, wenn die Slide wirklich ein anderes Bild bekommt.
+            # Bei einem Bild fuer den ganzen Beitrag traegt der langsame Zug allein,
+            # eine Blende darueber saehe aus wie ein Ruecksprung.
+            blende = si > 0 and felder[si] is not felder[si - 1]
             for f in range(n):
                 t = f / n
                 z = 1.0 - 0.055 * t
                 cw, ch = int(W * z * 1.25), int(H * z * 1.25)
                 ox = int((BW - cw) * (0.5 + 0.10 * (t - 0.5)))
                 oy = int((BH - ch) * (0.5 - 0.14 * (t - 0.5)))
-                frame = np.asarray(
+                grund = np.asarray(
                     Image.fromarray(bg[oy:oy + ch, ox:ox + cw]).resize(
                         (W, H), Image.BILINEAR)).astype(np.float32)
+                if blende and letztes is not None and t * dur < UEBERBLENDUNG:
+                    m = ease(min(1.0, t * dur / UEBERBLENDUNG))
+                    grund = letztes * (1 - m) + grund * m
+                frame = grund
                 tin, tout = 0.75 / dur, 0.55 / dur
                 a = (ease(min(1.0, t / tin)) if t < tin
                      else ease(max(0.0, (1 - t) / tout)) if t > 1 - tout else 1.0)
@@ -269,10 +324,11 @@ def bauen(spec: dict, ziel: str) -> str:
                     rise = int(26 * (1 - a))
                     lay = np.roll(tx, rise, axis=0) if rise else tx
                     al = (lay[..., 3:4] / 255.0) * a
-                    frame = frame * (1 - al) + lay[..., :3] * al
-                frame += korn[k % 10]
+                    frame = grund * (1 - al) + lay[..., :3] * al
+                frame = frame + korn[k % 10]
                 k += 1
                 p.stdin.write(np.clip(frame, 0, 255).astype(np.uint8).tobytes())
+            letztes = grund
         p.stdin.close()
         if p.wait() != 0:
             raise SystemExit("ffmpeg ist fehlgeschlagen.")

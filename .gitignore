@@ -1,2 +1,5 @@
+# Sprachmodell fuer die Vorlesestimme, rund 60 MB. Wird im Renderlauf geholt und
+# von actions/cache zwischengespeichert - gehoert nicht ins Repo.
+stimmen/
+*.teil
 __pycache__/
-*.pyc

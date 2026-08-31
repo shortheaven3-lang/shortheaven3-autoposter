@@ -7,6 +7,7 @@ on:
       - 'render.py'
       - 'render_reel.py'
       - 'hintergrund.py'
+      - 'stimme.py'
       - 'musik.py'
       - 'backgrounds/**'
   workflow_dispatch:
@@ -28,11 +29,18 @@ jobs:
         run: ffmpeg -version >/dev/null 2>&1 || sudo apt-get install -y -qq ffmpeg
 
       - name: Python-Pakete installieren
-        run: pip install --quiet Pillow numpy scipy
+        run: pip install --quiet Pillow numpy scipy piper-tts
+
+      - name: Stimmmodell aus dem Zwischenspeicher
+        uses: actions/cache@v4
+        with:
+          path: stimmen
+          key: piper-de_DE-thorsten-medium-v1
 
       - name: Rendern
         env:
-          # Optional. Ohne Schluessel greift Openverse (CC0/Public Domain, kein Konto noetig).
+          # Optional. Greift nur bei der blinden Suche ueber "motiv"; normalerweise
+          # steht in der Queue-Datei ein ausgesuchtes "bild" und es braucht keinen.
           PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
         run: python3 render.py --alle
 
