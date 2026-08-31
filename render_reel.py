@@ -69,17 +69,33 @@ def _bildpfad(spec: dict) -> str | None:
         print(f"  hintergrund {eigen!r} fehlt - weiter mit Motiv oder Farbfeld")
 
     pfad = os.path.join(ORDNER, f"post-{nr}.jpg")
-    if os.path.exists(pfad):
-        return pfad                       # schon geholt oder von Hand hinterlegt
-
+    merk = os.path.join(ORDNER, f"post-{nr}.quelle")
     bild, motiv = spec.get("bild"), spec.get("motiv")
+
+    vorhanden = os.path.exists(pfad)
+    if vorhanden:
+        # Liegt schon ein Bild da, wird es behalten - sonst holte jeder Lauf neu.
+        # Ausnahme: In der Queue-Datei steht inzwischen eine andere URL. Ohne
+        # diese Pruefung bliebe eine korrigierte Auswahl folgenlos, weil die alte
+        # Datei den Vorrang behaelt.
+        alt = ""
+        if os.path.exists(merk):
+            with open(merk, encoding="utf-8") as f:
+                alt = f.read().strip()
+        if not bild or alt == bild:
+            return pfad
+        print("  Bildquelle hat sich geaendert - wird neu geholt")
+
     if not bild and not motiv:
         return None
     os.makedirs(ORDNER, exist_ok=True)
     if (bild and hintergrund.von_url(bild, pfad)) or (motiv and hintergrund.besorgen(motiv, pfad)):
+        with open(merk, "w", encoding="utf-8") as f:
+            f.write((bild or f"suche: {motiv}") + "\n")
         return pfad
-    if os.path.exists(pfad):
-        os.remove(pfad)
+    if vorhanden:
+        print("  Neuholen gescheitert - das alte Bild bleibt stehen")
+        return pfad
     print("  kein Motivbild bekommen - Farbfeld")
     return None
 
