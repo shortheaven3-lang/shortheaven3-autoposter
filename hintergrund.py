@@ -1,25 +1,27 @@
 #!/usr/bin/env python3
 """Hintergruende fuer Reels: Motivbild holen, aufbereiten, sonst Farbfeld.
 
-Drei Wege, in dieser Reihenfolge:
+Vier Stufen, in dieser Reihenfolge:
 
-A  Motivbild aus einer freien Bilddatenbank. Die Queue-Datei nennt unter "motiv"
-   einen englischen Suchbegriff; mehrere durch "|" getrennte Begriffe werden der
-   Reihe nach probiert. Gesucht wird nur nach Bildern, die ohne
-   Namensnennung kommerziell nutzbar sind (Pexels-Lizenz bzw. CC0/Public Domain).
-   Das gefundene Bild wird nach backgrounds/post-NN.jpg gelegt und mitcommittet -
-   ein zweiter Lauf holt nichts neu, das Reel bleibt reproduzierbar.
 B  Eigenes Bild. Liegt in der Queue-Datei ein "hintergrund" (Dateiname in
    backgrounds/) oder existiert backgrounds/post-NN.jpg schon, wird das genommen.
-   Damit laesst sich jedes automatisch geholte Bild von Hand ersetzen.
-C  Prozedurales Farbfeld wie bisher. Greift, wenn A und B nichts liefern - und
-   immer dann, wenn der Abruf im Renderlauf scheitert. Der Lauf bricht nie ab,
-   nur weil eine Bilddatenbank gerade nicht antwortet.
+   Damit laesst sich jedes Bild von Hand ersetzen - diese Stufe schlaegt alles.
+A1 Ausgesuchtes Bild. Die Queue-Datei nennt unter "bild" die direkte Bild-URL.
+   Sie wird beim Redigieren gesetzt, nachdem jemand die Treffer wirklich
+   angesehen hat. Der Renderlauf laedt nur noch herunter - kein Schluessel noetig,
+   keine Suche, kein Zufall. Das ist der vorgesehene Weg.
+A2 Suche im Renderlauf. Die Queue-Datei nennt unter "motiv" einen englischen
+   Suchbegriff; mehrere durch "|" getrennte Begriffe werden der Reihe nach
+   probiert. Braucht PEXELS_API_KEY als Repo-Secret. Notnagel fuer Beitraege,
+   die ohne Redaktion in die Warteschlange kommen - die Auswahl ist blind.
+C  Prozedurales Farbfeld. Greift, wenn nichts davon liefert - und immer dann,
+   wenn ein Abruf scheitert. Der Lauf bricht nie ab, nur weil eine Bilddatenbank
+   gerade nicht antwortet.
 
-Zur Bildqualitaet: Openverse braucht keinen Schluessel, sein CC0-Bestand ist aber
-duenn und ungleich - fuer viele Alltagsmotive kommt nichts zurueck. Ein kostenlos
-erhaeltlicher Pexels-Schluessel (Repo-Secret PEXELS_API_KEY, kein Abo) hebt die
-Trefferquote und die Anmutung deutlich; ohne ihn bleibt es oft beim Farbfeld.
+Nur Pexels, und nur ueber die Pexels-Lizenz: kommerzielle Nutzung erlaubt,
+Namensnennung nicht verlangt. Openverse ist raus, es hat den anonymen Zugang am
+31.08.2026 geschlossen (HTTP 401). Der Urheber wird trotzdem in der Queue-Datei
+unter "bildnachweis" festgehalten - kostet nichts und ist im Zweifel der Beleg.
 
 Jedes Motivbild wird auf das Markenklima gezogen (blaue Schatten, Kupfer nur in
 den Lichtern), weichgezeichnet, abgedunkelt und mit einem Leseschleier hinterlegt.
@@ -70,6 +72,7 @@ def _pexels(motiv: str, ziel: str) -> bool:
     """Pexels, falls ein Schluessel hinterlegt ist. Kostenloser Zugang, kein Abo."""
     key = os.environ.get("PEXELS_API_KEY", "").strip()
     if not key:
+        print("  kein PEXELS_API_KEY gesetzt - Suche uebersprungen")
         return False
     url = "https://api.pexels.com/v1/search?" + urllib.parse.urlencode(
         {"query": motiv, "orientation": "portrait", "size": "large", "per_page": 12})
@@ -90,41 +93,17 @@ def _pexels(motiv: str, ziel: str) -> bool:
     return False
 
 
-def _openverse(motiv: str, ziel: str) -> bool:
-    """Openverse ohne Schluessel. Nur CC0 und Public Domain - keine Namensnennung noetig."""
-    # Kein Seitenverhaeltnis-Filter: der CC0-Bestand ist klein, und beschnitten
-    # wird ohnehin. Nur die Aufloesung muss reichen.
-    url = "https://api.openverse.org/v1/images/?" + urllib.parse.urlencode(
-        {"q": motiv, "license": "cc0,pdm", "page_size": 40, "mature": "false"})
-    try:
-        req = urllib.request.Request(url, headers={"User-Agent": "shortheaven3-autoposter/1.0"})
-        with urllib.request.urlopen(req, timeout=ZEITSPERRE) as r:
-            antwort = json.load(r)
-    except Exception as e:
-        print(f"  Openverse nicht erreichbar ({type(e).__name__}: {e})")
-        return False
-    treffer = antwort.get("results", [])
-    print(f"  Openverse: {antwort.get('result_count', 0)} Treffer, {len(treffer)} geliefert")
-    for t in treffer:
-        if (t.get("height") or 0) < 700 or (t.get("width") or 0) < 700:
-            continue
-        quelle = t.get("url")
-        if quelle and _laden(quelle, ziel):
-            print(f"  genommen: {t.get('title')} [{t.get('license')}] {t.get('foreign_landing_url')}")
-            return True
-    return False
+def von_url(url: str, ziel: str) -> bool:
+    """Weg A1: ein beim Redigieren ausgesuchtes Bild holen. Kein Schluessel noetig."""
+    print(f"  ausgesuchtes Bild: {url}")
+    return _laden(url, ziel)
 
 
 def besorgen(motiv: str, ziel: str) -> bool:
-    """Holt ein Motivbild nach ziel.
-
-    Pexels schlaegt Openverse, wenn ein Schluessel hinterlegt ist. Mehrere mit "|"
-    getrennte Begriffe werden nacheinander probiert - der CC0-Bestand ist duenn,
-    ein zweiter Begriff rettet oft den Beitrag.
-    """
+    """Weg A2: blind suchen. Nur Notnagel - normalerweise steht "bild" in der Datei."""
     for begriff in [b.strip() for b in motiv.split("|") if b.strip()]:
         print(f"  Motiv gesucht: {begriff!r}")
-        if _pexels(begriff, ziel) or _openverse(begriff, ziel):
+        if _pexels(begriff, ziel):
             return True
     return False
 

@@ -49,10 +49,11 @@ REGULAR = font_pfad("EBGaramond12-Regular", "EBGaramond08-Regular", "EBGaramond*
 
 
 # ----------------------------------------------------------------- Hintergrund
-# Der Hintergrund kommt aus hintergrund.py. Reihenfolge: eigenes Bild aus
-# backgrounds/, sonst ein Motivbild aus einer freien Datenbank (Suchbegriff im
-# Feld "motiv"), sonst das prozedurale Farbfeld. Ein geholtes Bild bleibt als
-# Datei liegen und wird mitcommittet - der naechste Lauf holt nichts neu.
+# Der Hintergrund kommt aus hintergrund.py. Reihenfolge: eigene Datei in
+# backgrounds/, sonst die beim Redigieren ausgesuchte Bild-URL aus dem Feld
+# "bild", sonst eine blinde Suche ueber "motiv", sonst das prozedurale Farbfeld.
+# Ein geholtes Bild bleibt als Datei liegen und wird mitcommittet - der naechste
+# Lauf holt nichts neu, das Reel bleibt Bild fuer Bild reproduzierbar.
 ORDNER = os.path.join(BASE, "backgrounds")
 ZUG_W, ZUG_H = int(W * 1.25), int(H * 1.25)  # groesser als das Bild, fuer den langsamen Zug
 
@@ -70,11 +71,12 @@ def _bildpfad(spec: dict) -> str | None:
     pfad = os.path.join(ORDNER, f"post-{nr}.jpg")
     if os.path.exists(pfad):
         return pfad                       # schon geholt oder von Hand hinterlegt
-    motiv = spec.get("motiv")
-    if not motiv:
+
+    bild, motiv = spec.get("bild"), spec.get("motiv")
+    if not bild and not motiv:
         return None
     os.makedirs(ORDNER, exist_ok=True)
-    if hintergrund.besorgen(motiv, pfad):
+    if (bild and hintergrund.von_url(bild, pfad)) or (motiv and hintergrund.besorgen(motiv, pfad)):
         return pfad
     if os.path.exists(pfad):
         os.remove(pfad)
