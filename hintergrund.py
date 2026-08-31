@@ -1,22 +1,26 @@
 #!/usr/bin/env python3
-"""Hintergruende fuer Reels: Motivbild holen, aufbereiten, sonst Farbfeld.
+"""Hintergrundbilder fuer Reels und Karussells: holen, aufbereiten, sonst Farbfeld.
 
 Vier Stufen, in dieser Reihenfolge:
 
 B  Eigenes Bild. Liegt in der Queue-Datei ein "hintergrund" (Dateiname in
-   backgrounds/) oder existiert backgrounds/post-NN.jpg schon, wird das genommen.
-   Damit laesst sich jedes Bild von Hand ersetzen - diese Stufe schlaegt alles.
+   backgrounds/) oder existiert backgrounds/post-NN[-i].jpg schon, wird das
+   genommen. Diese Stufe schlaegt alles - so laesst sich jede Auswahl von Hand
+   ueberschreiben.
 A1 Ausgesuchtes Bild. Die Queue-Datei nennt unter "bild" die direkte Bild-URL.
    Sie wird beim Redigieren gesetzt, nachdem jemand die Treffer wirklich
-   angesehen hat. Der Renderlauf laedt nur noch herunter - kein Schluessel noetig,
-   keine Suche, kein Zufall. Das ist der vorgesehene Weg.
-A2 Suche im Renderlauf. Die Queue-Datei nennt unter "motiv" einen englischen
-   Suchbegriff; mehrere durch "|" getrennte Begriffe werden der Reihe nach
-   probiert. Braucht PEXELS_API_KEY als Repo-Secret. Notnagel fuer Beitraege,
-   die ohne Redaktion in die Warteschlange kommen - die Auswahl ist blind.
-C  Prozedurales Farbfeld. Greift, wenn nichts davon liefert - und immer dann,
-   wenn ein Abruf scheitert. Der Lauf bricht nie ab, nur weil eine Bilddatenbank
-   gerade nicht antwortet.
+   angesehen hat. Der Renderlauf laedt nur noch herunter - kein Schluessel
+   noetig, keine Suche, kein Zufall. Das ist der vorgesehene Weg.
+A2 Suche im Renderlauf ueber "motiv", braucht PEXELS_API_KEY. Notnagel fuer
+   Beitraege, die ohne Redaktion in die Warteschlange kommen; die Auswahl ist
+   blind und trifft oft daneben.
+C  Prozedurales Farbfeld (nur Reel; Karussells bleiben dann einfarbig). Greift,
+   wenn nichts davon liefert - und immer dann, wenn ein Abruf scheitert. Der
+   Lauf bricht nie ab, nur weil eine Bilddatenbank gerade nicht antwortet.
+
+"bild" und "hintergrund" duerfen Listen sein, ein Eintrag je Slide. Das ist der
+Regelfall: jede Slide zeigt den Ort, von dem ihr Satz handelt. Beim Reel laufen
+die Bilder am Wechsel ineinander, beim Karussell ist das Wischen der Wechsel.
 
 Nur Pexels, und nur ueber die Pexels-Lizenz: kommerzielle Nutzung erlaubt,
 Namensnennung nicht verlangt. Openverse ist raus, es hat den anonymen Zugang am
@@ -49,6 +53,7 @@ MITTEN = np.array((74, 92, 122), np.float32)
 LICHTER = np.array((168, 142, 116), np.float32)
 
 ZEITSPERRE = 20  # Sekunden je Abruf; ein haengender Dienst darf den Lauf nicht kippen
+ORDNER = os.path.join(os.path.dirname(os.path.abspath(__file__)), "backgrounds")
 
 
 # ----------------------------------------------------------------- Bild besorgen
@@ -59,12 +64,18 @@ def _laden(url: str, ziel: str) -> bool:
             roh = r.read(25 * 1024 * 1024)
         if len(roh) < 20_000:
             return False
-        with open(ziel, "wb") as f:
+        # Erst in eine Nebendatei schreiben und pruefen, dann umbenennen. Sonst
+        # zerstoert ein halber oder kaputter Download ein vorhandenes Bild.
+        teil = ziel + ".teil"
+        with open(teil, "wb") as f:
             f.write(roh)
-        Image.open(ziel).verify()
+        Image.open(teil).verify()
+        os.replace(teil, ziel)
         return True
     except Exception as e:
         print(f"  Bild nicht geladen ({type(e).__name__}: {e})")
+        if os.path.exists(ziel + ".teil"):
+            os.remove(ziel + ".teil")
         return False
 
 
@@ -72,7 +83,6 @@ def _pexels(motiv: str, ziel: str) -> bool:
     """Pexels, falls ein Schluessel hinterlegt ist. Kostenloser Zugang, kein Abo."""
     key = os.environ.get("PEXELS_API_KEY", "").strip()
     if not key:
-        print("  kein PEXELS_API_KEY gesetzt - Suche uebersprungen")
         return False
     url = "https://api.pexels.com/v1/search?" + urllib.parse.urlencode(
         {"query": motiv, "orientation": "portrait", "size": "large", "per_page": 12})
@@ -188,3 +198,67 @@ def feld(seed: int, bw: int, bh: int) -> np.ndarray:
     a = np.asarray(im.resize((bw, bh), Image.BICUBIC)).astype(np.float32)
     a *= _vignette(bw, bh)[..., None]
     return np.clip(a, 0, 255).astype(np.uint8)
+
+
+# ------------------------------------------------------- Welches Bild je Slide
+def je_slide(wert, si: int):
+    """Ein Feld kann fuer alle Slides gelten oder je Slide einen Eintrag haben."""
+    if isinstance(wert, list):
+        return wert[si] if si < len(wert) else (wert[-1] if wert else None)
+    return wert
+
+
+def bildpfad(spec: dict, si: int) -> str | None:
+    """Hintergrundbild fuer Slide si, bei Bedarf geholt. None heisst: kein Bild.
+
+    Gilt fuer Reel und Karussell gleichermassen. "bild" und "hintergrund" duerfen
+    Listen sein - dann bekommt jede Slide ihr eigenes Motiv, passend zu dem Satz,
+    der gerade steht.
+    """
+    nr = spec["post"]
+    mehrere = isinstance(spec.get("bild"), list) or isinstance(spec.get("hintergrund"), list)
+    marke = f"post-{nr}-{si + 1}" if mehrere else f"post-{nr}"
+
+    eigen = je_slide(spec.get("hintergrund"), si)
+    if eigen:
+        pfad = eigen if os.path.isabs(eigen) else os.path.join(ORDNER, eigen)
+        if os.path.exists(pfad):
+            return pfad
+        print(f"  hintergrund {eigen!r} fehlt - weiter mit Motiv oder ohne Bild")
+
+    pfad = os.path.join(ORDNER, f"{marke}.jpg")
+    merk = os.path.join(ORDNER, f"{marke}.quelle")
+    bild = je_slide(spec.get("bild"), si)
+    motiv = je_slide(spec.get("motiv"), si)
+
+    vorhanden = os.path.exists(pfad)
+    if vorhanden:
+        # Liegt schon ein Bild da, wird es behalten - sonst holte jeder Lauf neu.
+        # Ausnahme: In der Queue-Datei steht inzwischen eine andere URL. Ohne
+        # diese Pruefung bliebe eine korrigierte Auswahl folgenlos, weil die alte
+        # Datei den Vorrang behaelt.
+        alt = ""
+        if os.path.exists(merk):
+            with open(merk, encoding="utf-8") as f:
+                alt = f.read().strip()
+        if not bild or alt == bild:
+            return pfad
+        print("  Bildquelle hat sich geaendert - wird neu geholt")
+
+    if not bild and not motiv:
+        return None
+    os.makedirs(ORDNER, exist_ok=True)
+    if (bild and von_url(bild, pfad)) or (motiv and besorgen(motiv, pfad)):
+        with open(merk, "w", encoding="utf-8") as f:
+            f.write((bild or f"suche: {motiv}") + "\n")
+        return pfad
+    if vorhanden:
+        print("  Neuholen gescheitert - das alte Bild bleibt stehen")
+        return pfad
+    print("  kein Motivbild bekommen")
+    return None
+
+
+def bildpfade(spec: dict) -> list[str | None]:
+    """Ein Pfad je Slide, None wo es kein Bild gibt."""
+    return [bildpfad(spec, si) for si in range(len(spec["slides"]))]
