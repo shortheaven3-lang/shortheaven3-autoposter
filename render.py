@@ -143,8 +143,42 @@ def hook_variante(saeule):
     return HOOK_VARIANTEN.get(saeule, HOOK_VARIANTEN["Der Spiegel"])
 
 
-def render_slide(slide, seed, saeule=""):
-    img = Image.new("RGB", (W, H), BG)
+def hintergruende(spec):
+    """Ein Hintergrundbild je Slide, oder None wo keins da ist.
+
+    Dieselbe Aufloesung wie beim Reel: "bild" darf eine Liste sein, eine URL je
+    Slide. Beim Karussell ist der Bildwechsel das Wischen - jede Slide zeigt den
+    Ort, von dem ihr Satz handelt. Ohne Bild bleibt die Flaeche wie frueher
+    einfarbig; ein Karussell ohne Motive sieht also aus wie bisher.
+    """
+    if not any(spec.get(k) for k in ("bild", "hintergrund", "motiv")):
+        return [None] * len(spec["slides"])   # ohne Motive bleibt alles wie frueher
+    import hintergrund  # erst hier, damit Laeufe ohne numpy nicht daran scheitern
+
+    felder, lager = [], {}
+    for si, (pfad, slide) in enumerate(zip(hintergrund.bildpfade(spec), spec["slides"])):
+        if pfad is None:
+            felder.append(None)
+            continue
+        # Der Leseschleier sitzt dort, wo der Satzspiegel steht - beim Hook je
+        # nach Saeule hoeher oder tiefer als bei den Inhalts-Slides.
+        mitte = (hook_variante(spec.get("saeule", ""))["mitte"]
+                 if slide.get("typ") == "hook" else MITTE) / H
+        schluessel = (pfad, round(mitte, 3))
+        if schluessel not in lager:
+            try:
+                lager[schluessel] = Image.fromarray(
+                    hintergrund.aufbereiten(pfad, W, H, mitte=mitte))
+                print(f"  Slide {si + 1}: {os.path.relpath(pfad, BASE)}")
+            except Exception as e:
+                print(f"  {pfad} unbrauchbar ({type(e).__name__}: {e}) - einfarbig")
+                lager[schluessel] = None
+        felder.append(lager[schluessel])
+    return felder
+
+
+def render_slide(slide, seed, saeule="", grund=None):
+    img = grund.copy() if grund is not None else Image.new("RGB", (W, H), BG)
     d = ImageDraw.Draw(img)
     typ = slide.get("typ", "inhalt")
 
@@ -235,10 +269,12 @@ def verarbeiten(pfad):
 
     out_dir = os.path.join(BASE, "images")
     os.makedirs(out_dir, exist_ok=True)
+    felder = hintergruende(spec)
     namen = []
     for i, slide in enumerate(spec["slides"], 1):
         name = f"post-{nr}-slide-{i}.jpg"
-        render_slide(slide, seed=nr * 100 + i, saeule=spec.get("saeule", "")).save(
+        render_slide(slide, seed=nr * 100 + i, saeule=spec.get("saeule", ""),
+                     grund=felder[i - 1]).save(
             os.path.join(out_dir, name), "JPEG", quality=92, subsampling=0
         )
         namen.append(name)

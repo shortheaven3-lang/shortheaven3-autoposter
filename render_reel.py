@@ -55,74 +55,13 @@ REGULAR = font_pfad("EBGaramond12-Regular", "EBGaramond08-Regular", "EBGaramond*
 # "bild", sonst eine blinde Suche ueber "motiv", sonst das prozedurale Farbfeld.
 # Ein geholtes Bild bleibt als Datei liegen und wird mitcommittet - der naechste
 # Lauf holt nichts neu, das Reel bleibt Bild fuer Bild reproduzierbar.
-ORDNER = os.path.join(BASE, "backgrounds")
 ZUG_W, ZUG_H = int(W * 1.25), int(H * 1.25)  # groesser als das Bild, fuer den langsamen Zug
-
-
-def _je_slide(wert, si: int, n: int):
-    """Ein Wert kann fuer alle Slides gelten oder je Slide einer sein."""
-    if isinstance(wert, list):
-        return wert[si] if si < len(wert) else (wert[-1] if wert else None)
-    return wert
-
-
-def _bildpfad(spec: dict, si: int, n: int) -> str | None:
-    """Hintergrundbild fuer Slide si. None heisst: prozedurales Farbfeld.
-
-    "bild" und "hintergrund" duerfen eine Liste sein - dann bekommt jede Slide
-    ihr eigenes Motiv, passend zu dem Satz, der gerade steht. Als einzelner Wert
-    gilt dasselbe Bild fuer den ganzen Beitrag.
-    """
-    nr = spec["post"]
-    mehrere = isinstance(spec.get("bild"), list) or isinstance(spec.get("hintergrund"), list)
-    marke = f"post-{nr}-{si + 1}" if mehrere else f"post-{nr}"
-
-    eigen = _je_slide(spec.get("hintergrund"), si, n)
-    if eigen:
-        pfad = eigen if os.path.isabs(eigen) else os.path.join(ORDNER, eigen)
-        if os.path.exists(pfad):
-            return pfad
-        print(f"  hintergrund {eigen!r} fehlt - weiter mit Motiv oder Farbfeld")
-
-    pfad = os.path.join(ORDNER, f"{marke}.jpg")
-    merk = os.path.join(ORDNER, f"{marke}.quelle")
-    bild = _je_slide(spec.get("bild"), si, n)
-    motiv = _je_slide(spec.get("motiv"), si, n)
-
-    vorhanden = os.path.exists(pfad)
-    if vorhanden:
-        # Liegt schon ein Bild da, wird es behalten - sonst holte jeder Lauf neu.
-        # Ausnahme: In der Queue-Datei steht inzwischen eine andere URL. Ohne
-        # diese Pruefung bliebe eine korrigierte Auswahl folgenlos, weil die alte
-        # Datei den Vorrang behaelt.
-        alt = ""
-        if os.path.exists(merk):
-            with open(merk, encoding="utf-8") as f:
-                alt = f.read().strip()
-        if not bild or alt == bild:
-            return pfad
-        print("  Bildquelle hat sich geaendert - wird neu geholt")
-
-    if not bild and not motiv:
-        return None
-    os.makedirs(ORDNER, exist_ok=True)
-    if (bild and hintergrund.von_url(bild, pfad)) or (motiv and hintergrund.besorgen(motiv, pfad)):
-        with open(merk, "w", encoding="utf-8") as f:
-            f.write((bild or f"suche: {motiv}") + "\n")
-        return pfad
-    if vorhanden:
-        print("  Neuholen gescheitert - das alte Bild bleibt stehen")
-        return pfad
-    print("  kein Motivbild bekommen - Farbfeld")
-    return None
 
 
 def hintergruende(spec: dict) -> list[np.ndarray]:
     """Ein Feld je Slide. Gleiche Datei wird nur einmal aufbereitet."""
-    n = len(spec["slides"])
     felder, lager = [], {}
-    for si in range(n):
-        pfad = _bildpfad(spec, si, n)
+    for si, pfad in enumerate(hintergrund.bildpfade(spec)):
         if pfad and pfad not in lager:
             try:
                 lager[pfad] = hintergrund.aufbereiten(pfad, ZUG_W, ZUG_H,
