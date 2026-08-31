@@ -6,7 +6,9 @@ on:
       - 'queue/**.json'
       - 'render.py'
       - 'render_reel.py'
+      - 'hintergrund.py'
       - 'musik.py'
+      - 'backgrounds/**'
   workflow_dispatch:
 
 permissions:
@@ -29,6 +31,9 @@ jobs:
         run: pip install --quiet Pillow numpy scipy
 
       - name: Rendern
+        env:
+          # Optional. Ohne Schluessel greift Openverse (CC0/Public Domain, kein Konto noetig).
+          PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
         run: python3 render.py --alle
 
       - name: Ergebnis committen
@@ -38,6 +43,9 @@ jobs:
           git add images schedule.json
           # videos/ existiert erst, wenn das erste Reel gerendert wurde
           [ -d videos ] && git add videos || true
+          # backgrounds/ haelt die geholten Motivbilder fest, damit ein zweiter
+          # Lauf nichts neu holt und das Reel reproduzierbar bleibt
+          [ -d backgrounds ] && git add backgrounds || true
           if git diff --cached --quiet; then
             echo "Keine Aenderungen."
           else

@@ -14,9 +14,10 @@ import sys
 import tempfile
 
 import numpy as np
-from PIL import Image, ImageDraw, ImageFont, ImageFilter
+from PIL import Image, ImageDraw, ImageFont
 
 import musik
+import hintergrund
 
 W, H, CX, FPS = 1080, 1920, 540, 24
 BG = (27, 35, 54)
@@ -48,32 +49,52 @@ REGULAR = font_pfad("EBGaramond12-Regular", "EBGaramond08-Regular", "EBGaramond*
 
 
 # ----------------------------------------------------------------- Hintergrund
-def feld(seed: int) -> np.ndarray:
-    """Atmosphaerisches Farbfeld, groesser als das Bild, fuer den langsamen Zug."""
-    BW, BH = int(W * 1.25), int(H * 1.25)
-    rng = np.random.default_rng(seed)
-    sw, sh = BW // 4, BH // 4
-    a = np.zeros((sh, sw, 3), np.float32) + np.array(BG, np.float32)
-    yy, xx = np.mgrid[0:sh, 0:sw].astype(np.float32)
-    for _ in range(5):
-        cx, cy = rng.uniform(0.1, 0.9) * sw, rng.uniform(0.1, 0.9) * sh
-        r = rng.uniform(0.30, 0.68) * sw
-        warm = rng.uniform(0, 1) < 0.45
-        col = np.array(FG if warm else (44, 58, 86), np.float32)
-        d = np.sqrt((xx - cx) ** 2 + (yy - cy) ** 2) / r
-        m = np.clip(1.0 - d, 0, 1) ** 2.4 * (0.16 if warm else 0.42)
-        a += m[..., None] * (col - a) * 0.9
-    im = Image.fromarray(np.clip(a, 0, 255).astype(np.uint8)).filter(
-        ImageFilter.GaussianBlur(15))
-    a = np.asarray(im.resize((BW, BH), Image.BICUBIC)).astype(np.float32)
+# Der Hintergrund kommt aus hintergrund.py. Reihenfolge: eigenes Bild aus
+# backgrounds/, sonst ein Motivbild aus einer freien Datenbank (Suchbegriff im
+# Feld "motiv"), sonst das prozedurale Farbfeld. Ein geholtes Bild bleibt als
+# Datei liegen und wird mitcommittet - der naechste Lauf holt nichts neu.
+ORDNER = os.path.join(BASE, "backgrounds")
+ZUG_W, ZUG_H = int(W * 1.25), int(H * 1.25)  # groesser als das Bild, fuer den langsamen Zug
 
-    vw, vh = BW // 8, BH // 8
-    yy, xx = np.mgrid[0:vh, 0:vw].astype(np.float32)
-    d = np.sqrt(((xx - vw / 2) / (vw / 2)) ** 2 + ((yy - vh / 2) / (vh / 2)) ** 2)
-    v = np.clip(1.15 - 0.55 * d, 0.32, 1.0)
-    v = np.asarray(Image.fromarray((v * 255).astype(np.uint8)).resize(
-        (BW, BH), Image.BICUBIC)).astype(np.float32) / 255.0
-    return np.clip(a * v[..., None], 0, 255).astype(np.uint8)
+
+def _bildpfad(spec: dict) -> str | None:
+    """Ein Hintergrundbild je Beitrag. None heisst: prozedurales Farbfeld."""
+    nr = spec["post"]
+    eigen = spec.get("hintergrund")
+    if eigen:
+        pfad = eigen if os.path.isabs(eigen) else os.path.join(ORDNER, eigen)
+        if os.path.exists(pfad):
+            return pfad
+        print(f"  hintergrund {eigen!r} fehlt - weiter mit Motiv oder Farbfeld")
+
+    pfad = os.path.join(ORDNER, f"post-{nr}.jpg")
+    if os.path.exists(pfad):
+        return pfad                       # schon geholt oder von Hand hinterlegt
+    motiv = spec.get("motiv")
+    if not motiv:
+        return None
+    os.makedirs(ORDNER, exist_ok=True)
+    if hintergrund.besorgen(motiv, pfad):
+        return pfad
+    if os.path.exists(pfad):
+        os.remove(pfad)
+    print("  kein Motivbild bekommen - Farbfeld")
+    return None
+
+
+def hintergruende(spec: dict) -> list[np.ndarray]:
+    """Ein Feld je Slide. Beim Motivbild dasselbe fuer alle - der langsame Zug
+    macht daraus trotzdem vier verschiedene Ausschnitte."""
+    n = len(spec["slides"])
+    pfad = _bildpfad(spec)
+    if pfad:
+        try:
+            bild = hintergrund.aufbereiten(pfad, ZUG_W, ZUG_H, mitte=SAFE_MID / H)
+            print(f"  Hintergrund: {os.path.relpath(pfad, BASE)}")
+            return [bild] * n
+        except Exception as e:
+            print(f"  {pfad} unbrauchbar ({type(e).__name__}: {e}) - Farbfeld")
+    return [hintergrund.feld(spec["post"] * 100 + i, ZUG_W, ZUG_H) for i in range(n)]
 
 
 # ------------------------------------------------------------------ Textebenen
@@ -157,10 +178,25 @@ def ebene(slide: dict, saeule: str = "") -> np.ndarray:
 
 # ------------------------------------------------------------------------ Film
 def zeiten(slides: list) -> list[float]:
-    """Kuerzere Standzeiten, wenn viele Slides kommen — sonst wird das Reel zaeh."""
-    lang = len(slides) > 4
-    kopf, mitte = (5.5, 4.5) if lang else (6.0, 5.0)
-    return [kopf if s.get("typ") in ("hook", "cta") else mitte for s in slides]
+    """Standzeit nach Lesemenge statt nach fester Zahl.
+
+    Vorher stand jeder Satz gleich lang, egal wie viel darauf zu lesen war - bei
+    den laengeren Slides musste man das Reel anhalten. Jetzt bekommt jede Slide
+    2,5 s Grundzeit plus 0,4 s je Wort, mindestens 6 s. Damit ein Beitrag mit
+    sechs Slides nicht ausufert, wird die Gesamtlaenge bei GESAMT_MAX gedeckelt
+    und proportional zurueckgenommen, aber nie unter die Untergrenze.
+    """
+    GRUND, JE_WORT, MIN, MAX, GESAMT_MAX = 2.5, 0.4, 6.0, 10.5, 44.0
+    dauer = []
+    for s in slides:
+        rumpf = s.get("unterzeile") if s.get("typ") == "hook" else s.get("text", "")
+        woerter = len((s.get("headline", "") + " " + (rumpf or "")).split())
+        dauer.append(min(MAX, max(MIN, GRUND + JE_WORT * woerter)))
+    gesamt = sum(dauer)
+    if gesamt > GESAMT_MAX:
+        f = GESAMT_MAX / gesamt
+        dauer = [max(MIN, d * f) for d in dauer]
+    return [round(d, 2) for d in dauer]
 
 
 def ease(t):
@@ -179,7 +215,7 @@ def bauen(spec: dict, ziel: str) -> str:
                          spec.get("saeule", ""), seed=nr,
                          anbieter=os.environ.get("MUSIK_ANBIETER", "eigen"))
 
-        felder = [feld(nr * 100 + i) for i in range(len(slides))]
+        felder = hintergruende(spec)
         ebenen = [ebene(s, spec.get("saeule", "")) for s in slides]
         rng = np.random.default_rng(7)
         korn = [rng.normal(0, 2.6, (H, W, 1)).astype(np.float32) for _ in range(10)]
