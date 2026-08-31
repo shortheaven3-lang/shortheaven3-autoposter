@@ -16,9 +16,14 @@ C  Prozedurales Farbfeld wie bisher. Greift, wenn A und B nichts liefern - und
    immer dann, wenn der Abruf im Renderlauf scheitert. Der Lauf bricht nie ab,
    nur weil eine Bilddatenbank gerade nicht antwortet.
 
-Jedes Motivbild wird auf das Markenklima gezogen (Duplex aus #1B2336 und #9E826A),
-weichgezeichnet, abgedunkelt und mit einem Leseschleier hinterlegt. Ein Foto soll
-Stimmung tragen, nicht mit der Schrift um Aufmerksamkeit streiten.
+Zur Bildqualitaet: Openverse braucht keinen Schluessel, sein CC0-Bestand ist aber
+duenn und ungleich - fuer viele Alltagsmotive kommt nichts zurueck. Ein kostenlos
+erhaeltlicher Pexels-Schluessel (Repo-Secret PEXELS_API_KEY, kein Abo) hebt die
+Trefferquote und die Anmutung deutlich; ohne ihn bleibt es oft beim Farbfeld.
+
+Jedes Motivbild wird auf das Markenklima gezogen (blaue Schatten, Kupfer nur in
+den Lichtern), weichgezeichnet, abgedunkelt und mit einem Leseschleier hinterlegt.
+Ein Foto soll Stimmung tragen, nicht mit der Schrift um Aufmerksamkeit streiten.
 """
 from __future__ import annotations
 
@@ -76,32 +81,36 @@ def _pexels(motiv: str, ziel: str) -> bool:
     except Exception as e:
         print(f"  Pexels nicht erreichbar ({type(e).__name__}: {e})")
         return False
+    print(f"  Pexels: {len(treffer)} Treffer")
     for t in treffer:
         quelle = (t.get("src") or {}).get("large2x") or (t.get("src") or {}).get("large")
         if quelle and _laden(quelle, ziel):
-            print(f"  Pexels: {t.get('alt') or motiv} ({t.get('url')})")
+            print(f"  genommen: {t.get('alt') or motiv} ({t.get('url')})")
             return True
     return False
 
 
 def _openverse(motiv: str, ziel: str) -> bool:
     """Openverse ohne Schluessel. Nur CC0 und Public Domain - keine Namensnennung noetig."""
+    # Kein Seitenverhaeltnis-Filter: der CC0-Bestand ist klein, und beschnitten
+    # wird ohnehin. Nur die Aufloesung muss reichen.
     url = "https://api.openverse.org/v1/images/?" + urllib.parse.urlencode(
-        {"q": motiv, "license": "cc0,pdm", "page_size": 20,
-         "mature": "false", "aspect_ratio": "tall"})
+        {"q": motiv, "license": "cc0,pdm", "page_size": 40, "mature": "false"})
     try:
         req = urllib.request.Request(url, headers={"User-Agent": "shortheaven3-autoposter/1.0"})
         with urllib.request.urlopen(req, timeout=ZEITSPERRE) as r:
-            treffer = json.load(r).get("results", [])
+            antwort = json.load(r)
     except Exception as e:
         print(f"  Openverse nicht erreichbar ({type(e).__name__}: {e})")
         return False
+    treffer = antwort.get("results", [])
+    print(f"  Openverse: {antwort.get('result_count', 0)} Treffer, {len(treffer)} geliefert")
     for t in treffer:
-        if (t.get("height") or 0) < 900 or (t.get("width") or 0) < 600:
+        if (t.get("height") or 0) < 700 or (t.get("width") or 0) < 700:
             continue
         quelle = t.get("url")
         if quelle and _laden(quelle, ziel):
-            print(f"  Openverse: {t.get('title')} [{t.get('license')}] {t.get('foreign_landing_url')}")
+            print(f"  genommen: {t.get('title')} [{t.get('license')}] {t.get('foreign_landing_url')}")
             return True
     return False
 
