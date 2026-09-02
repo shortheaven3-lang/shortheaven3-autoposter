@@ -1,0 +1,59 @@
+{
+  "post": 38,
+  "date": "2026-09-03",
+  "saeule": "Das Ritual",
+  "stimme": true,
+  "bild": [
+    "https://images.pexels.com/photos/14401754/pexels-photo-14401754.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=2400&w=1350",
+    "https://images.pexels.com/photos/9757621/pexels-photo-9757621.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=2400&w=1350",
+    "https://images.pexels.com/photos/12195833/pexels-photo-12195833.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=2400&w=1350",
+    "https://images.pexels.com/photos/30233118/pexels-photo-30233118.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=2400&w=1350",
+    "https://images.pexels.com/photos/6031319/pexels-photo-6031319.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=2400&w=1350",
+    "https://images.pexels.com/photos/19124867/pexels-photo-19124867.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=2400&w=1350"
+  ],
+  "bildnachweis": [
+    "Furkan Salihoğlu / Pexels - https://www.pexels.com/photo/window-in-a-dark-room-14401754/",
+    "Bilal Mansuri / Pexels - https://www.pexels.com/photo/yellow-lights-in-a-kitchen-9757621/",
+    "Natalie Dmay / Pexels - https://www.pexels.com/photo/brown-wooden-table-near-window-12195833/",
+    "Esra Erdem / Pexels - https://www.pexels.com/photo/cozy-vintage-living-room-with-warm-lamp-light-30233118/",
+    "Ceren / Pexels - https://www.pexels.com/photo/concrete-wall-with-touch-of-light-6031319/",
+    "Ozge Alpaslan / Pexels - https://www.pexels.com/photo/room-in-dark-19124867/"
+  ],
+  "caption": "Du rufst an, ohne Grund.\n\nMittwoch, kurz nach acht. Du stehst am Küchenfenster, das Wasser ist aufgesetzt, und du wählst die Nummer, die du sonst nur wählst, wenn etwas ist. Es ist nichts. Ihr redet über den Zug, über den Rollladen, der seit Juni klemmt, über eine Serie, die ihr beide angefangen und keiner zu Ende gesehen hat. Nach ein paar Minuten hörst du Besteck klappern, sie räumt nebenbei die Spülmaschine ein und redet weiter.\n\nIn Minute elf sagt sie etwas über ihren Vater und macht eine Pause. Sie hatte das nicht vor. Es lag nur nichts anderes mehr an.\n\nDas ist der Unterschied zum Anruf mit Anlass: Wer etwas zu besprechen hat, legt auf, sobald es besprochen ist. Sieben Minuten, sauber erledigt. Der Satz über den Vater passt in keine sieben Minuten. Er braucht die Strecke davor, auf der es um nichts geht, und die entsteht nur, wenn niemand ein Ziel hat.\n\nDeshalb steht der Mittwoch im Kalender. Ein Termin ohne Zweck ist der einzige, den man nicht abarbeiten kann.\n\nHeb dir die elfte Minute auf. Sie ist der Grund, warum du nach der siebten nicht auflegst.\n\n#anrufen #freundschaft #verbundenheit #ritual #innerearbeit",
+  "slides": [
+    {
+      "typ": "hook",
+      "headline": "Du rufst an, ohne Grund.",
+      "unterzeile": "Mittwoch, kurz nach acht, seit vier Wochen derselbe Termin."
+    },
+    {
+      "typ": "inhalt",
+      "ziffer": "01",
+      "headline": "Die ersten Minuten sind Wetter",
+      "text": "Ihr redet über den Zug, die Arbeit, den kaputten Rollladen."
+    },
+    {
+      "typ": "inhalt",
+      "ziffer": "02",
+      "headline": "Nebenher wird weitergeräumt",
+      "text": "Du hörst Besteck klappern, sie redet weiter, keiner legt auf."
+    },
+    {
+      "typ": "inhalt",
+      "ziffer": "03",
+      "headline": "In Minute elf kippt es",
+      "text": "Sie sagt etwas über ihren Vater und macht eine Pause."
+    },
+    {
+      "typ": "inhalt",
+      "ziffer": "04",
+      "headline": "Ein Anlass hätte das verhindert",
+      "text": "Wer etwas zu besprechen hat, legt auf, sobald es besprochen ist."
+    },
+    {
+      "typ": "cta",
+      "headline": "Kein Grund, ein Termin",
+      "text": "Der Grund kommt in Minute elf, wenn niemand ihn sucht."
+    }
+  ]
+}
