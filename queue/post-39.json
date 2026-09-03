@@ -1,0 +1,59 @@
+{
+  "post": 39,
+  "date": "2026-09-04",
+  "saeule": "Die Frage",
+  "stimme": true,
+  "bild": [
+    "https://images.pexels.com/photos/11961955/pexels-photo-11961955.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=2400&w=1350",
+    "https://images.pexels.com/photos/22431071/pexels-photo-22431071.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=2400&w=1350",
+    "https://images.pexels.com/photos/8203719/pexels-photo-8203719.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=2400&w=1350",
+    "https://images.pexels.com/photos/19191287/pexels-photo-19191287.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=2400&w=1350",
+    "https://images.pexels.com/photos/37697626/pexels-photo-37697626.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=2400&w=1350",
+    "https://images.pexels.com/photos/11433111/pexels-photo-11433111.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=2400&w=1350"
+  ],
+  "bildnachweis": [
+    "Tavarruk / Pexels - https://www.pexels.com/photo/window-in-dark-room-11961955/",
+    "Ferhat Kocakaya / Pexels - https://www.pexels.com/photo/a-lamp-in-a-dark-corridor-22431071/",
+    "Nikita Nikitin / Pexels - https://www.pexels.com/photo/white-microwave-oven-beside-the-refrigerator-inside-the-dark-room-8203719/",
+    "Simeon Stoilov / Pexels - https://www.pexels.com/photo/desk-lamp-illuminating-dark-bedroom-19191287/",
+    "Li Chunyu / Pexels - https://www.pexels.com/photo/moody-interior-of-minimalist-dining-room-37697626/",
+    "Jessika Arraes / Pexels - https://www.pexels.com/photo/sun-ray-in-room-11433111/"
+  ],
+  "caption": "Warum klingelt es zehn vor sechs?\n\nDer Wecker steht seit vier Jahren auf derselben Zeit. Damals lag die Stelle zwei Bahnwechsel entfernt, vierzig Minuten, und wer den Zug um zwanzig nach sechs verpasste, kam zu spät. Also zehn vor sechs. Küche im Dunkeln, Wasser aufsetzen, Radio leise, während draußen noch niemand unterwegs ist.\n\nSeit zwei Jahren fängt der Tag um neun an, vier Straßen weiter. Halb acht würde reichen. Du stehst weiter um zehn vor sechs auf und wartest neunzig Minuten auf etwas, das du früher nicht hattest. Du füllst sie mit Nachrichten und einer zweiten Tasse und bist um neun schon einmal müde gewesen.\n\nDas ist kein Fehler im Charakter. Das ist eine Einstellung, die niemand zurückgenommen hat. Was einmal entschieden wurde, läuft weiter, auch wenn der Anlass längst weg ist. Der Wecker fragt nicht nach. Dein Platz am Tisch fragt auch nicht nach, und die Seite im Bett hat seit dem Einzug niemand neu verhandelt.\n\nDraußen ist es noch dunkel, und der Grund dafür ist zwei Jahre alt.\n\n#gewohnheit #alltag #entscheidungen #selbstreflexion #psychologie",
+  "slides": [
+    {
+      "typ": "hook",
+      "headline": "Warum klingelt es zehn vor sechs?",
+      "unterzeile": "Der Wecker steht seit vier Jahren auf derselben Zeit."
+    },
+    {
+      "typ": "inhalt",
+      "ziffer": "01",
+      "headline": "Der Weg war damals länger",
+      "text": "Die alte Stelle lag zwei Bahnwechsel und vierzig Minuten entfernt."
+    },
+    {
+      "typ": "inhalt",
+      "ziffer": "02",
+      "headline": "Seit dem Wechsel reicht halb acht",
+      "text": "Du stehst weiter im Dunkeln auf und wartest auf den Kaffee."
+    },
+    {
+      "typ": "inhalt",
+      "ziffer": "03",
+      "headline": "Niemand hat den Wecker zurückgestellt",
+      "text": "Du hast ihn einmal gestellt und danach nie wieder angesehen."
+    },
+    {
+      "typ": "inhalt",
+      "ziffer": "04",
+      "headline": "Der Wecker ist nicht der einzige",
+      "text": "Auch dein Platz am Tisch ist eine Entscheidung von damals."
+    },
+    {
+      "typ": "cta",
+      "headline": "Zehn vor sechs, ohne Grund",
+      "text": "Der Wecker hält einen Termin, den es nicht mehr gibt."
+    }
+  ]
+}
