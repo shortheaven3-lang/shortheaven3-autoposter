@@ -1,0 +1,58 @@
+{
+  "post": 41,
+  "date": "2026-09-06",
+  "saeule": "Der Spiegel",
+  "bild": [
+    "https://images.pexels.com/photos/14540915/pexels-photo-14540915.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=2025&w=1620",
+    "https://images.pexels.com/photos/38657011/pexels-photo-38657011.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=2025&w=1620",
+    "https://images.pexels.com/photos/12106877/pexels-photo-12106877.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=2025&w=1620",
+    "https://images.pexels.com/photos/11433111/pexels-photo-11433111.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=2025&w=1620",
+    "https://images.pexels.com/photos/11570561/pexels-photo-11570561.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=2025&w=1620",
+    "https://images.pexels.com/photos/11849692/pexels-photo-11849692.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=2025&w=1620"
+  ],
+  "bildnachweis": [
+    "Alan Quirván / Pexels - https://www.pexels.com/photo/a-lamp-shade-on-the-counter-14540915/",
+    "Ragucci / Pexels - https://www.pexels.com/photo/vintage-wall-lamp-casting-dramatic-shadows-38657011/",
+    "speak / Pexels - https://www.pexels.com/photo/window-of-a-house-during-night-time-12106877/",
+    "Jessika Arraes / Pexels - https://www.pexels.com/photo/sun-ray-in-room-11433111/",
+    "Francesco Ungaro / Pexels - https://www.pexels.com/photo/view-of-a-dark-corridor-11570561/",
+    "Nvgr / Pexels - https://www.pexels.com/photo/metal-framed-bed-near-window-with-curtain-11849692/"
+  ],
+  "caption": "Du hast Wasser aufgesetzt.\n\nFreitagabend, kurz nach zehn, ihre Küche. Sie erzählt, wie das mit ihrem Bruder ausgegangen ist, und mitten im Satz kippt ihre Stimme. Du stehst auf. Du setzt Wasser auf, du holst die Küchenrolle, du machst den Kühlschrank zu, den niemand aufgelassen hat.\n\nVier Minuten stehst du am Herd, mit dem Rücken zu ihr, und hörst zu. Du hilfst gern, das ist nicht gelogen. Nur hättest du auch sitzen bleiben können, und das wäre die schwerere Variante gewesen. Solange deine Hände etwas zu tun haben, bist du nicht die Person, die nur dasitzt.\n\nSie merkt es, ohne es zu benennen. Sie redet leiser weiter, und der Satz, den sie angefangen hat, kommt nicht zu Ende. Ein Rücken am Herd ist eine höfliche Form von Tür.\n\nDas ist keine Kälte. Wer aufsteht, hält schlecht aus, dass es auf diesen Satz keine Antwort gibt und dass Zuhören sich anfühlt wie Nichtstun. Tee ist etwas, das man tun kann. Ein Blick, den man erwidert, während jemand weint, ist es nicht.\n\nWisch dich durch — und beim nächsten Mal bleibt der Wasserkocher aus.\n\n#trösten #dasein #beziehungen #selbstreflexion #innerearbeit",
+  "slides": [
+    {
+      "typ": "hook",
+      "headline": "Du hast Wasser aufgesetzt.",
+      "unterzeile": "Sie war mitten im Satz."
+    },
+    {
+      "typ": "inhalt",
+      "ziffer": "01",
+      "headline": "Sie fängt an zu weinen",
+      "text": "Du stehst auf und suchst die zweite Tasse im Schrank."
+    },
+    {
+      "typ": "inhalt",
+      "ziffer": "02",
+      "headline": "Deine Hände finden Arbeit",
+      "text": "Küchenrolle holen, Kühlschrank zumachen, das Fenster einen Spalt aufschieben."
+    },
+    {
+      "typ": "inhalt",
+      "ziffer": "03",
+      "headline": "Vier Schritte bis zum Herd",
+      "text": "Am Herd stehst du mit dem Rücken zu ihr."
+    },
+    {
+      "typ": "inhalt",
+      "ziffer": "04",
+      "headline": "Sie redet leiser weiter",
+      "text": "Der Satz, den sie angefangen hat, kommt nicht zu Ende."
+    },
+    {
+      "typ": "cta",
+      "headline": "Der Tee war nie für sie",
+      "text": "Vier Minuten am Herd, in denen niemand dich ansehen konnte."
+    }
+  ]
+}
